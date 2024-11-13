@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'qa_page.dart'; // Import the Q&A page
+import 'assistance_page.dart'; // Import the Assistance page
 
 class HomePage extends StatelessWidget {
   @override
@@ -99,7 +100,7 @@ class HomePage extends StatelessWidget {
                     context,
                     Icons.medical_services,
                     'Assistance',
-                    '/assistance',
+                    '/assistance', // Make sure to use '/assistance' route
                     screenWidth,
                   ),
                 ],
@@ -111,24 +112,23 @@ class HomePage extends StatelessWidget {
 
       // Centered SOS button with Text instead of Icon
       floatingActionButton: SizedBox(
-        width: 70, 
+        width: 70,
         height: 70,
-        child: 
-      FloatingActionButton(
-        onPressed: () {
-          Navigator.pushNamed(context, '/sos');
-        },
-        backgroundColor: Colors.red,
-        shape: CircleBorder(),
-        child: Text(
-          'SOS',
-          style: GoogleFonts.poppins(
-            fontSize: 20,
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
+        child: FloatingActionButton(
+          onPressed: () {
+            Navigator.pushNamed(context, '/sos');
+          },
+          backgroundColor: Colors.red,
+          shape: CircleBorder(),
+          child: Text(
+            'SOS',
+            style: GoogleFonts.poppins(
+              fontSize: 20,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
-      ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
 
@@ -168,6 +168,9 @@ class HomePage extends StatelessWidget {
         onPressed: () {
           if (route == '/qa') {
             Navigator.push(context, MaterialPageRoute(builder: (context) => QAPage()));
+          } else if (route == '/assistance') {
+            // Add the navigation logic for Assistance page here
+            Navigator.pushNamed(context, '/assistance'); // Navigating to the Assistance page
           } else {
             Navigator.pushNamed(context, route);
           }

@@ -33,6 +33,7 @@ dependencies:
   http: ^0.13.4
   flutter_dotenv: ^5.0.2
   google_fonts: ^4.0.4
+  google_maps_flutter: ^2.5.3
   
 
 
