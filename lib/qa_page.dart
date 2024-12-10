@@ -17,13 +17,6 @@ class _QAPageState extends State<QAPage> {
 
     } else if (message.toLowerCase().contains("domestic") || message.toLowerCase().contains("violence")) {
       setState(() {
-          _messages.add({
-          "bot_image": Image.asset(
-            "assets/learn.png",
-            width: 450, // Set desired width
-            height: 450, // Set desired height
-          ),
-        });
         _messages.add({
           "bot_image": Image.asset(
             "assets/learn.png",
@@ -73,7 +66,7 @@ class _QAPageState extends State<QAPage> {
       setState(() {
         _messages.add({
           "bot_image": Image.asset(
-            "assets/help.png",
+            "assets/sign.png",
             width: 450, // Set desired width
             height: 450, // Set desired height
           ),
