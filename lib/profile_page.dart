@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';  // To work with File type (local image storage)
+import 'package:google_fonts/google_fonts.dart';
+
+// Import the History Page
+import 'history_page.dart';
 
 class ProfilePage extends StatefulWidget {
   @override
@@ -8,20 +10,6 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  File? _image;  // To store the selected image from the gallery
-  int _selectedIndex = 2; // Initialize the selected index to the Profile page
-
-  // Function to pick an image from the gallery
-  Future<void> _pickImage() async {
-    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
-
-    if (pickedFile != null) {
-      setState(() {
-        _image = File(pickedFile.path);
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -30,143 +18,137 @@ class _ProfilePageState extends State<ProfilePage> {
         backgroundColor: Colors.purple[100],
         title: Text(
           'BreakFree.',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold),
         ),
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
-            // Navigate back to the previous page (Home)
             Navigator.pop(context);
           },
         ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.chat_bubble_outline),
-            onPressed: () {
-              // Handle chat icon press
-            },
-          ),
-        ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Profile Picture with tap to upload functionality
-            GestureDetector(
-              onTap: _pickImage,  // Open the gallery when the profile picture is tapped
-              child: CircleAvatar(
-                radius: 50,
-                backgroundImage: _image != null
-                    ? FileImage(_image!)  // Display the selected image
-                    : AssetImage('assets/images/profile_pic.png') as ImageProvider, // Default image
-              ),
-            ),
-            SizedBox(height: 10),
-            // Name and Role
-            Text(
-              'Khadijah Ibrahim',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(
-              'Victim',
-              style: TextStyle(
-                fontSize: 18,
-                color: Colors.grey[600],
-              ),
-            ),
-            SizedBox(height: 30),
-
-            // Personal Section
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Personal',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(height: 30),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Features',
+                  style: GoogleFonts.poppins(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-            ),
-            SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildProfileButton(Icons.person_outline, 'About Me'),
-                _buildProfileButton(Icons.favorite_border, 'Health'),
-                _buildProfileButton(Icons.settings_outlined, 'Settings'),
-              ],
-            ),
-            SizedBox(height: 30),
-
-            // Others Section
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Others',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+              SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildProfileButton(Icons.history, 'History', () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => HistoryPage()),
+                    );
+                  }),
+                  _buildProfileButton(Icons.favorite_border, 'Health', _showHealthDialog),
+                  _buildProfileButton(Icons.settings_outlined, 'Settings', _toggleSoundSettings),
+                ],
+              ),
+              SizedBox(height: 30),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Information',
+                  style: GoogleFonts.poppins(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-            ),
-            SizedBox(height: 10),
-            _buildOptionCard(Icons.history, 'History', 'My Documentation'),
-            SizedBox(height: 10),
-            _buildOptionCard(Icons.phone, 'Emergency', 'My Contacts'),
-          ],
+              SizedBox(height: 10),
+              _buildInfoCard(
+                'Talian Kasih 15999',
+                'Talian Kasih provides a 24-hour helpline for counseling and support for domestic violence survivors. Call 15999 or WhatsApp +6019-261 5999 for assistance.',
+              ),
+              SizedBox(height: 10),
+              _buildInfoCard(
+                'Women’s Aid Organization (WAO)',
+                'WAO provides shelter, counseling, and support for domestic violence survivors in Malaysia. Visit wao.org.my or call +603 3000 8858 for more information.',
+              ),
+              SizedBox(height: 10),
+              _buildInfoCard(
+                'Police Emergency Assistance',
+                'Contact the nearest police station or call 999 in case of immediate danger or threat.',
+              ),
+              SizedBox(height: 10),
+              _buildInfoCard(
+                'LPPKN Counseling Services',
+                'The National Population and Family Development Board (LPPKN) offers free counseling services for those affected by domestic violence. Call 03-2693 7555 for help.',
+              ),
+            ],
+          ),
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.purple[100],
-        selectedItemColor: Colors.purple, // Set the selected item color
-        unselectedItemColor: Colors.black, // Set the unselected item color
-        currentIndex: _selectedIndex, // Keep track of the current index
-        onTap: (int index) {
-          setState(() {
-            _selectedIndex = index; // Update the index when an icon is tapped
-            if (index == 0) {
-              Navigator.pop(context);  // Navigate back to Home if the Home icon is tapped
-            }
-          });
-        },
-        items: [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home, color: _selectedIndex == 0 ? Colors.black : Colors.black),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Text(
-              'SOS',
-              style: TextStyle(
-                color: Colors.red,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+      // Centered SOS Button
+      floatingActionButton: SizedBox(
+        width: 70,
+        height: 70,
+        child: FloatingActionButton(
+          onPressed: () {
+            Navigator.pushNamed(context, '/sos');
+          },
+          backgroundColor: Colors.red,
+          shape: CircleBorder(),
+          child: Text(
+            'SOS',
+            style: GoogleFonts.poppins(
+              fontSize: 20,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
             ),
-            label: '',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person, color: _selectedIndex == 2 ? Colors.purple : Colors.black), // Profile icon color
-            label: 'Profile',
+        ),
+      ),
+
+floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      // Bottom Navigation Bar
+      bottomNavigationBar: BottomAppBar(
+        color: Colors.purple[100],
+        shape: CircularNotchedRectangle(),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                icon: Icon(Icons.home, color: Colors.black),
+                onPressed: () {
+                  Navigator.pushNamed(context, '/home');
+                },
+              ),
+              SizedBox(width: 40), // Space for the SOS button
+              IconButton(
+                icon: Icon(Icons.person, color: Colors.purple),
+                onPressed: () {
+                  Navigator.pushNamed(context, '/profile');
+                },
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
-  // Function to build profile buttons
-  Widget _buildProfileButton(IconData icon, String label) {
+  Widget _buildProfileButton(IconData icon, String label, Function onPressed) {
     return Column(
       children: [
         ElevatedButton(
-          onPressed: () {
-            // Handle button press
-          },
+          onPressed: () => onPressed(),
           style: ElevatedButton.styleFrom(
             foregroundColor: Colors.purple,
             backgroundColor: Colors.white,
@@ -184,7 +166,7 @@ class _ProfilePageState extends State<ProfilePage> {
         SizedBox(height: 10),
         Text(
           label,
-          style: TextStyle(
+          style: GoogleFonts.poppins(
             fontSize: 16,
             fontWeight: FontWeight.bold,
             color: Colors.purple,
@@ -194,8 +176,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // Function to build option cards for History and Emergency
-  Widget _buildOptionCard(IconData icon, String title, String subtitle) {
+  Widget _buildInfoCard(String title, String description) {
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -203,33 +184,67 @@ class _ProfilePageState extends State<ProfilePage> {
         border: Border.all(color: Colors.purple, width: 2),
         color: Colors.white,
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 40, color: Colors.black),
-          SizedBox(width: 20),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-              SizedBox(height: 5),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
-              ),
-            ],
+          Text(
+            title,
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
+          SizedBox(height: 5),
+          Text(
+            description,
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              color: Colors.grey[600],
+            ),
           ),
         ],
       ),
+    );
+  }
+
+  void _toggleSoundSettings() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Settings'),
+          content: Text('Sound settings toggled (Mute/Unmute).'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showHealthDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Health Details'),
+          content: Text('Here, users can add weight, height, and health-related data.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
     );
   }
 }

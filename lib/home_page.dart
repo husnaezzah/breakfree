@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'qa_page.dart'; // Import the Q&A page
-import 'assistance_page.dart'; // Import the Assistance page
 
 class HomePage extends StatelessWidget {
   @override

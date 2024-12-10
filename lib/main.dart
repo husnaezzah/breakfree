@@ -6,6 +6,7 @@ import 'profile_page.dart';
 import 'capture_page.dart';
 import 'qa_page.dart';
 import 'assistance_page.dart';
+import 'history_page.dart';
 
 void main() {
   runApp(MyApp());
@@ -29,6 +30,7 @@ class MyApp extends StatelessWidget {
         '/capture': (context) => CapturePage(),
         '/qa': (context) => QAPage(),
         '/assistance': (context) => AssistancePage(),
+        '/history': (context) => HistoryPage(),
       },
     );
   }

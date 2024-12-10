@@ -185,31 +185,34 @@ class _CapturePageState extends State<CapturePage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  ElevatedButton(
-                    onPressed: pickImageCamera,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 45, 15, 51),
-                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                      foregroundColor: Colors.black,
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: pickImageCamera,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromARGB(255, 45, 15, 51),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                      ),
+                      child: Text(
+                        "Take Photo",
+                        style: GoogleFonts.poppins(fontSize: 14, color: Colors.white),
+                      ),
                     ),
-                    child: Text("Take Photo", 
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      color: Colors.white),),
                   ),
-                  ElevatedButton(
-                    onPressed: pickImageGallery,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 45, 15, 51),
-                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                      foregroundColor: Colors.black,
+                  const SizedBox(width: 10), // Add spacing between buttons
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: pickImageGallery,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromARGB(255, 45, 15, 51),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                      ),
+                      child: Text(
+                        "Browse Gallery",
+                        style: GoogleFonts.poppins(fontSize: 14, color: Colors.white),
+                      ),
                     ),
-                    child: Text("Browse Gallery", 
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      color: Colors.white),),
                   ),
                 ],
               ),
