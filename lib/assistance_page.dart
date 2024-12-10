@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AssistancePage extends StatefulWidget {
@@ -10,14 +11,69 @@ class AssistancePage extends StatefulWidget {
 }
 
 class _AssistancePageState extends State<AssistancePage> {
-  GoogleMapController? mapController;
-  final LatLng _initialLocation = const LatLng(3.0738, 101.5183);
+  late GoogleMapController? mapController;
+  Position? _currentPoisition;
 
-  void _onMapCreated(GoogleMapController controller) {
-    setState(() {
-      mapController = controller;
-    });
+  final LatLng _initialLocation = LatLng(3.0738, 101.5183);
+
+  @override
+  void initState(){
+    super.initState();
+    _getCurrentLocation();
   }
+
+ Future<void> _getCurrentLocation() async {
+  bool serviceEnabled;
+  LocationPermission permission;
+
+  // Check if location services are enabled
+  serviceEnabled = await Geolocator.isLocationServiceEnabled();
+  if (!serviceEnabled) {
+    return Future.error('Location services are disabled.');
+  }
+
+  // Request location permission
+  permission = await Geolocator.checkPermission();
+  if (permission == LocationPermission.denied) {
+    permission = await Geolocator.requestPermission();
+    if (permission == LocationPermission.denied) {
+      return Future.error('Location permissions are denied.');
+    }
+  }
+
+  if (permission == LocationPermission.deniedForever) {
+    return Future.error('Location permissions are permanently denied.');
+  }
+
+  // Get the user's current location
+  final position = await Geolocator.getCurrentPosition(
+    desiredAccuracy: LocationAccuracy.high,
+  );
+
+  setState(() {
+    _currentPoisition = position;
+
+    // Ensure mapController is not null before animating the camera
+    if (mapController != null) {
+      mapController!.animateCamera(
+        CameraUpdate.newLatLng(
+          LatLng(position.latitude, position.longitude),
+        ),
+      );
+    }
+  });
+}
+ void _onMapCreated(GoogleMapController controller) {
+  mapController = controller;
+  if (_currentPoisition != null) {
+    mapController!.animateCamera(
+      CameraUpdate.newLatLng(
+        LatLng(_currentPoisition!.latitude, _currentPoisition!.longitude),
+      ),
+    );
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
