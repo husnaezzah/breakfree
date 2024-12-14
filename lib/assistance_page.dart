@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
 
 class AssistancePage extends StatefulWidget {
   const AssistancePage({super.key});
@@ -11,69 +13,125 @@ class AssistancePage extends StatefulWidget {
 }
 
 class _AssistancePageState extends State<AssistancePage> {
-  late GoogleMapController? mapController;
-  Position? _currentPoisition;
+  GoogleMapController? mapController;
+  Position? _currentPosition;
+  Set<Marker> _markers = {};
+  bool _isLoading = true;
 
   final LatLng _initialLocation = LatLng(3.0738, 101.5183);
 
   @override
-  void initState(){
+  void initState() {
     super.initState();
     _getCurrentLocation();
   }
 
- Future<void> _getCurrentLocation() async {
-  bool serviceEnabled;
-  LocationPermission permission;
+  Future<void> _getCurrentLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
 
-  // Check if location services are enabled
-  serviceEnabled = await Geolocator.isLocationServiceEnabled();
-  if (!serviceEnabled) {
-    return Future.error('Location services are disabled.');
-  }
-
-  // Request location permission
-  permission = await Geolocator.checkPermission();
-  if (permission == LocationPermission.denied) {
-    permission = await Geolocator.requestPermission();
-    if (permission == LocationPermission.denied) {
-      return Future.error('Location permissions are denied.');
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return Future.error('Location services are disabled.');
     }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return Future.error('Location permissions are denied.');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      return Future.error('Location permissions are permanently denied.');
+    }
+
+    final position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+
+    setState(() {
+      _currentPosition = position;
+      if (mapController != null) {
+        mapController!.animateCamera(
+          CameraUpdate.newLatLng(
+            LatLng(position.latitude, position.longitude),
+          ),
+        );
+      }
+      _fetchNearbyPoliceStations(position.latitude, position.longitude);
+    });
   }
 
-  if (permission == LocationPermission.deniedForever) {
-    return Future.error('Location permissions are permanently denied.');
+  // Modify to fetch only nearby police stations from OpenStreetMap (Nominatim)
+  Future<void> _fetchNearbyPoliceStations(double latitude, double longitude) async {
+    const int radius = 1000; // Search radius in meters
+    final String placeType = 'police';
+
+    final url = Uri.parse(
+      'https://nominatim.openstreetmap.org/search?format=json&q=$placeType&lat=$latitude&lon=$longitude&radius=$radius&addressdetails=1'
+    );
+
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      try {
+        final data = json.decode(response.body);
+        print('API Response for $placeType: ${response.body}');
+        if (data.isNotEmpty) {
+          setState(() {
+            _markers.clear();
+            for (var place in data) {
+              final name = place['display_name'];
+              final lat = double.parse(place['lat']);
+              final lon = double.parse(place['lon']);
+              
+              // Add marker for each police station
+              _markers.add(
+                Marker(
+                  markerId: MarkerId('$lat$lon'),
+                  position: LatLng(lat, lon),
+                  infoWindow: InfoWindow(
+                    title: name,
+                    snippet: 'Police Station',
+                  ),
+                ),
+              );
+            }
+          });
+        } else {
+          print('No results found for $placeType.');
+        }
+      } catch (e) {
+        print('Error decoding JSON response for $placeType: $e');
+      }
+    } else {
+      print('Failed to fetch places for $placeType. Status code: ${response.statusCode}');
+    }
+
+    setState(() {
+      _isLoading = false;
+    });
   }
 
-  // Get the user's current location
-  final position = await Geolocator.getCurrentPosition(
-    desiredAccuracy: LocationAccuracy.high,
-  );
-
-  setState(() {
-    _currentPoisition = position;
-
-    // Ensure mapController is not null before animating the camera
-    if (mapController != null) {
+  void _onMapCreated(GoogleMapController controller) {
+    mapController = controller;
+    if (_currentPosition != null) {
       mapController!.animateCamera(
         CameraUpdate.newLatLng(
-          LatLng(position.latitude, position.longitude),
+          LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
         ),
       );
     }
-  });
-}
- void _onMapCreated(GoogleMapController controller) {
-  mapController = controller;
-  if (_currentPoisition != null) {
+  }
+
+  // Update the marker on the map when "View" button is pressed
+  void _viewLocation(LatLng location) {
     mapController!.animateCamera(
-      CameraUpdate.newLatLng(
-        LatLng(_currentPoisition!.latitude, _currentPoisition!.longitude),
-      ),
+      CameraUpdate.newLatLngZoom(location, 15),
     );
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -91,7 +149,6 @@ class _AssistancePageState extends State<AssistancePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Google Map
             Container(
               height: 250,
               width: double.infinity,
@@ -109,103 +166,59 @@ class _AssistancePageState extends State<AssistancePage> {
                   myLocationEnabled: true,
                   myLocationButtonEnabled: true,
                   zoomControlsEnabled: true,
+                  markers: _markers,
                 ),
               ),
             ),
             const SizedBox(height: 10),
-
-            // Nearest Support Points Title
             Text(
               'Nearest Support Points',
               style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
-
-            // Support Points List
             Expanded(
-              child: ListView(
-                children: const [
-                  SupportPointCard(
-                    icon: Icons.local_hospital,
-                    title: 'Hospital',
-                    distance: '0.5km',
-                  ),
-                  SupportPointCard(
-                    icon: Icons.local_police,
-                    title: 'Police Station',
-                    distance: '1.2km',
-                  ),
-                  SupportPointCard(
-                    icon: Icons.home,
-                    title: 'Safe House',
-                    distance: '5km',
-                  ),
-                ],
-              ),
+              child: _isLoading
+                  ? Center(
+                      child: CircularProgressIndicator(),
+                    )
+                  : _markers.isNotEmpty
+                      ? ListView.builder(
+                          itemCount: _markers.length,
+                          itemBuilder: (context, index) {
+                            final marker = _markers.elementAt(index);
+                            return SupportPointCard(
+                              title: marker.infoWindow.title ?? 'Unknown Name',
+                              distance: marker.infoWindow.snippet ?? 'No address available',
+                              onViewPressed: () {
+                                _viewLocation(marker.position);
+                              },
+                            );
+                          },
+                        )
+                      : Center(
+                          child: Text(
+                            'No nearby police stations found.',
+                            style: GoogleFonts.poppins(fontSize: 16),
+                          ),
+                        ),
             ),
           ],
-        ),
-      ),
-      floatingActionButton: SizedBox(
-        width: 70,
-        height: 70,
-        child: FloatingActionButton(
-          onPressed: () {
-            Navigator.pushNamed(context, '/sos');
-          },
-          backgroundColor: Colors.red,
-          shape: CircleBorder(),
-          child: Text(
-            'SOS',
-            style: GoogleFonts.poppins(
-              fontSize: 20,
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(
-        color: Colors.purple[100],
-        shape: CircularNotchedRectangle(),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton(
-                icon: Icon(Icons.home, color: Colors.purple),
-                onPressed: () {
-                  Navigator.pushNamed(context, '/home');
-                },
-              ),
-              SizedBox(width: 40), // Space for the SOS button in the center
-              IconButton(
-                icon: Icon(Icons.person),
-                onPressed: () {
-                  Navigator.pushNamed(context, '/profile');
-                },
-              ),
-            ],
-          ),
         ),
       ),
     );
   }
 }
 
-// Support Point Card Widget
 class SupportPointCard extends StatelessWidget {
-  final IconData icon;
   final String title;
   final String distance;
+  final VoidCallback onViewPressed;
 
   const SupportPointCard({
     Key? key,
-    required this.icon,
     required this.title,
     required this.distance,
+    required this.onViewPressed,
   }) : super(key: key);
 
   @override
@@ -216,7 +229,7 @@ class SupportPointCard extends StatelessWidget {
       ),
       child: ListTile(
         leading: Icon(
-          icon,
+          Icons.local_police,
           size: 40,
           color: Colors.purple,
         ),
@@ -224,11 +237,9 @@ class SupportPointCard extends StatelessWidget {
           title,
           style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold),
         ),
-        subtitle: Text('Distance: $distance'),
+        subtitle: Text('Vicinity: $distance'),
         trailing: ElevatedButton(
-          onPressed: () {
-            // Implement the map view functionality here
-          },
+          onPressed: onViewPressed,
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.purple,
             shape: RoundedRectangleBorder(
