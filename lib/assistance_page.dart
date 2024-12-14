@@ -172,7 +172,7 @@ class _AssistancePageState extends State<AssistancePage> {
             ),
             const SizedBox(height: 10),
             Text(
-              'Nearby Support Points',
+              'Nearest Support Points',
               style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
