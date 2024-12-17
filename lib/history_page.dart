@@ -2,110 +2,186 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class HistoryPage extends StatelessWidget {
+  const HistoryPage({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.purple[50],
+      backgroundColor: Colors.purple[50], // Updated background color
       appBar: AppBar(
-        backgroundColor: Colors.purple[100],
+        backgroundColor: Colors.purple[100], // App bar color
+        centerTitle: true,
         title: Text(
           'BreakFree.',
-          style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          style: GoogleFonts.poppins(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
         ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'History',
-              style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // History Title
+              Text(
+                "History",
+                style: GoogleFonts.poppins(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+              SizedBox(height: 20),
+
+              // Drafts Section
+              Text(
+                "Drafts",
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
+                ),
+              ),
+              SizedBox(height: 10),
+              _buildHistoryBox(
+                image: Icons.image_outlined,
+                title: "Physical Abuse",
+                description: "30 May 2024\nIn Progress",
+              ),
+              SizedBox(height: 20),
+
+              // Recents Section
+              Text(
+                "Recents",
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
+                ),
+              ),
+              SizedBox(height: 10),
+              _buildHistoryBox(
+                image: Icons.image_outlined,
+                title: "Physical Abuse",
+                description: "17 February 2024\nSubmitted",
+              ),
+            ],
+          ),
+        ),
+      ),
+
+      // Floating Action Button and Bottom Navigation Bar
+      floatingActionButton: SizedBox(
+        width: 70,
+        height: 70,
+        child: FloatingActionButton(
+          onPressed: () {
+            Navigator.pushNamed(context, '/sos');
+          },
+          backgroundColor: Colors.red,
+          shape: CircleBorder(),
+          child: Text(
+            'SOS',
+            style: GoogleFonts.poppins(
+              fontSize: 20,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
             ),
-            SizedBox(height: 20),
-            Text(
-              'Drafts',
-              style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w600),
-            ),
-            SizedBox(height: 10),
-            _buildHistoryCard(
-              context,
-              imageUrl: 'assets/images/draft_image.png',
-              title: 'Physical Abuse',
-              date: '30 May 2024',
-              status: 'In Progress',
-            ),
-            SizedBox(height: 20),
-            Text(
-              'Recents',
-              style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w600),
-            ),
-            SizedBox(height: 10),
-            _buildHistoryCard(
-              context,
-              imageUrl: 'assets/images/recent_image.png',
-              title: 'Physical Abuse',
-              date: '17 February 2024',
-              status: 'Submitted',
-            ),
-          ],
+          ),
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: BottomAppBar(
+        color: Colors.purple[100],
+        shape: CircularNotchedRectangle(),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                icon: Icon(Icons.home, color: Colors.purple),
+                onPressed: () {
+                  Navigator.pushNamed(context, '/home');
+                },
+              ),
+              SizedBox(width: 40), // Space for the SOS button in the center
+              IconButton(
+                icon: Icon(Icons.person),
+                onPressed: () {
+                  Navigator.pushNamed(context, '/profile');
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildHistoryCard(
-    BuildContext context, {
-    required String imageUrl,
+  // Reusable Widget for Drafts and Recents with Image Space
+  Widget _buildHistoryBox({
+    required IconData image,
     required String title,
-    required String date,
-    required String status,
+    required String description,
   }) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 4,
-      child: ListTile(
-        leading: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: Image.asset(
-            imageUrl,
-            fit: BoxFit.cover,
+    return Container(
+      margin: EdgeInsets.only(bottom: 10),
+      padding: EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: Colors.purple, width: 2),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Placeholder for Image
+          Container(
             width: 60,
             height: 60,
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              image,
+              size: 35,
+              color: Colors.purple[300],
+            ),
           ),
-        ),
-        title: Text(
-          title,
-          style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              date,
-              style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey),
+          SizedBox(width: 12),
+
+          // Text Content (Title and Description)
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                SizedBox(height: 5),
+                Text(
+                  description,
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
             ),
-            Text(
-              status,
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                color: status == 'Submitted' ? Colors.green : Colors.orange,
-              ),
-            ),
-          ],
-        ),
-        trailing: Icon(Icons.arrow_forward),
-        onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('View details of $title')),
-          );
-        },
+          ),
+          Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[700]),
+        ],
       ),
     );
   }
