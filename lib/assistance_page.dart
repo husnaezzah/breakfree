@@ -66,7 +66,7 @@ class _AssistancePageState extends State<AssistancePage> {
 
   // Modify to fetch only nearby police stations from OpenStreetMap (Nominatim)
   Future<void> _fetchNearbyPoliceStations(double latitude, double longitude) async {
-    const int radius = 1000; // Search radius in meters
+    const int radius = 500; // Search radius in meters
     final String placeType = 'police';
 
     final url = Uri.parse(

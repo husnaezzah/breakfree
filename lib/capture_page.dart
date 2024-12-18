@@ -36,7 +36,6 @@ class CapturePage extends StatefulWidget {
 class _CapturePageState extends State<CapturePage> {
   File? filePath;
   String label = '';
-  double confidence = 0.0;
   final ImagePicker _picker = ImagePicker();
   DateTime? selectedDate;
   final TextEditingController locationController = TextEditingController();
@@ -71,7 +70,6 @@ class _CapturePageState extends State<CapturePage> {
 
     if (recognitions != null && recognitions.isNotEmpty) {
       setState(() {
-        confidence = recognitions[0]['confidence'] * 100;
         label = recognitions[0]['label'].toString();
       });
     } else {
@@ -98,7 +96,6 @@ class _CapturePageState extends State<CapturePage> {
 
     if (recognitions != null && recognitions.isNotEmpty) {
       setState(() {
-        confidence = recognitions[0]['confidence'] * 100;
         label = recognitions[0]['label'].toString();
       });
     } else {
@@ -155,12 +152,14 @@ class _CapturePageState extends State<CapturePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-               Text(
+              Text(
                 'Capture',
                 style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.bold),
               ),
-              Text('Report A Case',
-              style: GoogleFonts.poppins(fontSize: 12),),
+              Text(
+                'Report A Case',
+                style: GoogleFonts.poppins(fontSize: 12),
+              ),
               const SizedBox(height: 20),
               Container(
                 width: 280,
@@ -221,15 +220,14 @@ class _CapturePageState extends State<CapturePage> {
                 label,
                 style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
               ),
-              Text(
-                "Accuracy: ${confidence.toStringAsFixed(0)}%",
-                style: GoogleFonts.poppins(fontSize: 14),
-              ),
               const SizedBox(height: 20),
 
               // Date Input
               TextField(
-                controller: TextEditingController(text: selectedDate != null ? "${selectedDate!.month}/${selectedDate!.day}/${selectedDate!.year}" : ""),
+                controller: TextEditingController(
+                    text: selectedDate != null
+                        ? "${selectedDate!.month}/${selectedDate!.day}/${selectedDate!.year}"
+                        : ""),
                 decoration: const InputDecoration(
                   labelText: "Date",
                   prefixIcon: Icon(Icons.calendar_today),
@@ -281,9 +279,7 @@ class _CapturePageState extends State<CapturePage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color.fromARGB(255, 45, 15, 51),
                     ),
-                    child: Text('Submit', style: GoogleFonts.poppins(
-                      fontSize: 14 ,
-                      color: Colors.white)),
+                    child: Text('Submit', style: GoogleFonts.poppins(fontSize: 14, color: Colors.white)),
                   ),
                 ],
               ),
@@ -291,45 +287,43 @@ class _CapturePageState extends State<CapturePage> {
           ),
         ),
       ),
-            floatingActionButton: SizedBox(
-        width: 70, 
+      floatingActionButton: SizedBox(
+        width: 70,
         height: 70,
-        child: 
-      FloatingActionButton(
-        onPressed: () {
-          Navigator.pushNamed(context, '/sos');
-        },
-        backgroundColor: Colors.red,
-        shape: CircleBorder(),
-        child: Text(
-          'SOS',
-          style: GoogleFonts.poppins(
-            fontSize: 20,
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
+        child: FloatingActionButton(
+          onPressed: () {
+            Navigator.pushNamed(context, '/sos');
+          },
+          backgroundColor: Colors.red,
+          shape: const CircleBorder(),
+          child: Text(
+            'SOS',
+            style: GoogleFonts.poppins(
+              fontSize: 20,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       ),
-      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-
       bottomNavigationBar: BottomAppBar(
         color: Colors.purple[100],
-        shape: CircularNotchedRectangle(),
+        shape: const CircularNotchedRectangle(),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
-                icon: Icon(Icons.home),
+                icon: const Icon(Icons.home),
                 onPressed: () {
                   Navigator.pushNamed(context, '/home');
                 },
               ),
-              SizedBox(width: 40), // Space for the SOS button in the center
+              const SizedBox(width: 40), // Space for the SOS button in the center
               IconButton(
-                icon: Icon(Icons.person),
+                icon: const Icon(Icons.person),
                 onPressed: () {
                   Navigator.pushNamed(context, '/profile');
                 },
@@ -339,4 +333,5 @@ class _CapturePageState extends State<CapturePage> {
         ),
       ),
     );
-  }}
+  }
+}

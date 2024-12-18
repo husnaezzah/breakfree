@@ -24,16 +24,15 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (context) => HomePage(), //this is homepage
         '/signup': (context) => SignUpPage(), // this is sign up page
-        '/login': (context) => LoginPage(),
-        '/home': (context) => HomePage(),
-        '/profile': (context) => ProfilePage(),
-        '/capture': (context) => CapturePage(),
-        '/qa': (context) => QAPage(),
-        '/assistance': (context) => AssistancePage(),
-        '/history': (context) => HistoryPage(),
+        '/login': (context) => LoginPage(), // this is login page
+        '/home': (context) => HomePage(), // this is home page
+        '/profile': (context) => ProfilePage(), // this is profile page
+        '/capture': (context) => CapturePage(), // this is capture page
+        '/qa': (context) => QAPage(), // this is qa page
+        '/assistance': (context) => AssistancePage(), // this is assistance page
+        '/history': (context) => HistoryPage(), // this is history page
       },
     );
   }
 }
 
-//test
