@@ -10,7 +10,6 @@ class HistoryPage extends StatelessWidget {
       backgroundColor: Colors.purple[50], // Updated background color
       appBar: AppBar(
         backgroundColor: Colors.purple[100], // App bar color
-        centerTitle: true,
         title: Text(
           'BreakFree.',
           style: GoogleFonts.poppins(
