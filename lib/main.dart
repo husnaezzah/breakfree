@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';  // Import Firebase core
 import 'signup_page.dart';
 import 'login_page.dart';
 import 'home_page.dart';
@@ -8,8 +9,10 @@ import 'qa_page.dart';
 import 'assistance_page.dart';
 import 'history_page.dart';
 
-void main() {
-  runApp(MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();  // Ensure Flutter is initialized before Firebase
+  await Firebase.initializeApp();  // Initialize Firebase
+  runApp(MyApp());  // Run your app
 }
 
 class MyApp extends StatelessWidget {
@@ -22,7 +25,7 @@ class MyApp extends StatelessWidget {
       ),
       initialRoute: '/',
       routes: {
-        '/': (context) => HomePage(), //this is homepage
+        '/': (context) => HomePage(), // this is homepage
         '/signup': (context) => SignUpPage(), // this is sign up page
         '/login': (context) => LoginPage(), // this is login page
         '/home': (context) => HomePage(), // this is home page
@@ -35,4 +38,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-

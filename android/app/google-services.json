@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "993221352006",
+    "project_id": "breakfree-e28e5",
+    "storage_bucket": "breakfree-e28e5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:993221352006:android:0465af9091cc6e4ecac847",
+        "android_client_info": {
+          "package_name": "com.example.breakfree"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCoRto2UEfl6mHWAhPNqehtSX6pxBkRPNM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

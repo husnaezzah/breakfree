@@ -1,15 +1,36 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class HistoryPage extends StatelessWidget {
   const HistoryPage({Key? key}) : super(key: key);
 
+  // Fetch reports from Firestore based on status
+  Stream<List<Map<String, dynamic>>> fetchReports(String status) async* {
+    final categories = ['potential_physical_abuse', 'potential_psychological_abuse', 'general'];
+    List<Map<String, dynamic>> reports = [];
+
+    for (String category in categories) {
+      final QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('reports')
+          .doc(category)
+          .collection(status == 'Draft' ? 'drafts' : 'submissions')
+          .get();
+
+      for (var doc in snapshot.docs) {
+        reports.add(doc.data() as Map<String, dynamic>);
+      }
+    }
+
+    yield reports;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.purple[50], // Updated background color
+      backgroundColor: Colors.purple[50],
       appBar: AppBar(
-        backgroundColor: Colors.purple[100], // App bar color
+        backgroundColor: Colors.purple[100],
         centerTitle: true,
         title: Text(
           'BreakFree.',
@@ -35,7 +56,7 @@ class HistoryPage extends StatelessWidget {
                   color: Colors.black,
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
 
               // Drafts Section
               Text(
@@ -46,13 +67,30 @@ class HistoryPage extends StatelessWidget {
                   color: Colors.black,
                 ),
               ),
-              SizedBox(height: 10),
-              _buildHistoryBox(
-                image: Icons.image_outlined,
-                title: "Physical Abuse",
-                description: "30 May 2024\nIn Progress",
+              const SizedBox(height: 10),
+              StreamBuilder<List<Map<String, dynamic>>>(  
+                stream: fetchReports('Draft'),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const CircularProgressIndicator();
+                  }
+                  final drafts = snapshot.data ?? [];
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: drafts.length,
+                    itemBuilder: (context, index) {
+                      final draft = drafts[index];
+                      return _buildHistoryBox(
+                        imageUrl: draft['image_url'],  // Retrieve image URL from Firestore
+                        title: draft['label'] ?? 'General',
+                        description: draft['description'] ?? '',
+                      );
+                    },
+                  );
+                },
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
 
               // Recents Section
               Text(
@@ -63,18 +101,33 @@ class HistoryPage extends StatelessWidget {
                   color: Colors.black,
                 ),
               ),
-              SizedBox(height: 10),
-              _buildHistoryBox(
-                image: Icons.image_outlined,
-                title: "Physical Abuse",
-                description: "17 February 2024\nSubmitted",
+              const SizedBox(height: 10),
+              StreamBuilder<List<Map<String, dynamic>>>(  
+                stream: fetchReports('Submitted'),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const CircularProgressIndicator();
+                  }
+                  final recents = snapshot.data ?? [];
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: recents.length,
+                    itemBuilder: (context, index) {
+                      final recent = recents[index];
+                      return _buildHistoryBox(
+                        imageUrl: recent['image_url'],  // Retrieve image URL from Firestore
+                        title: recent['label'] ?? 'General',
+                        description: recent['description'] ?? '',
+                      );
+                    },
+                  );
+                },
               ),
             ],
           ),
         ),
       ),
-
-      // Floating Action Button and Bottom Navigation Bar
       floatingActionButton: SizedBox(
         width: 70,
         height: 70,
@@ -83,7 +136,7 @@ class HistoryPage extends StatelessWidget {
             Navigator.pushNamed(context, '/sos');
           },
           backgroundColor: Colors.red,
-          shape: CircleBorder(),
+          shape: const CircleBorder(),
           child: Text(
             'SOS',
             style: GoogleFonts.poppins(
@@ -97,21 +150,21 @@ class HistoryPage extends StatelessWidget {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
         color: Colors.purple[100],
-        shape: CircularNotchedRectangle(),
+        shape: const CircularNotchedRectangle(),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
-                icon: Icon(Icons.home, color: Colors.purple),
+                icon: const Icon(Icons.home),
                 onPressed: () {
                   Navigator.pushNamed(context, '/home');
                 },
               ),
-              SizedBox(width: 40), // Space for the SOS button in the center
+              const SizedBox(width: 40),
               IconButton(
-                icon: Icon(Icons.person),
+                icon: const Icon(Icons.person),
                 onPressed: () {
                   Navigator.pushNamed(context, '/profile');
                 },
@@ -123,15 +176,18 @@ class HistoryPage extends StatelessWidget {
     );
   }
 
-  // Reusable Widget for Drafts and Recents with Image Space
+  // Reusable Widget for Drafts and Recents with Image Handling
   Widget _buildHistoryBox({
-    required IconData image,
+    required String? imageUrl,
     required String title,
     required String description,
   }) {
+    // Use a default image URL if no image URL is available
+    final String imageToDisplay = imageUrl ?? 'https://example.com/default-image.png';
+
     return Container(
-      margin: EdgeInsets.only(bottom: 10),
-      padding: EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(15),
@@ -140,7 +196,7 @@ class HistoryPage extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Placeholder for Image
+          // Image section
           Container(
             width: 60,
             height: 60,
@@ -148,15 +204,15 @@ class HistoryPage extends StatelessWidget {
               color: Colors.grey[200],
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(
-              image,
-              size: 35,
-              color: Colors.purple[300],
-            ),
+            child: imageUrl != null
+                ? Image.network(imageToDisplay, fit: BoxFit.cover)  // Load image from Firestore URL
+                : Icon(
+                    Icons.image_outlined,
+                    size: 35,
+                    color: Colors.purple[300],
+                  ),
           ),
-          SizedBox(width: 12),
-
-          // Text Content (Title and Description)
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -169,7 +225,7 @@ class HistoryPage extends StatelessWidget {
                     color: Colors.black,
                   ),
                 ),
-                SizedBox(height: 5),
+                const SizedBox(height: 5),
                 Text(
                   description,
                   style: GoogleFonts.poppins(
@@ -180,7 +236,6 @@ class HistoryPage extends StatelessWidget {
               ],
             ),
           ),
-          Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[700]),
         ],
       ),
     );

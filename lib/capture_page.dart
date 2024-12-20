@@ -1,30 +1,11 @@
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_tflite/flutter_tflite.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:developer' as devtools;
-
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'BreakFree',
-      theme: ThemeData(
-        textTheme: GoogleFonts.poppinsTextTheme(),
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const CapturePage(),
-    );
-  }
-}
 
 class CapturePage extends StatefulWidget {
   const CapturePage({super.key});
@@ -36,10 +17,12 @@ class CapturePage extends StatefulWidget {
 class _CapturePageState extends State<CapturePage> {
   File? filePath;
   String label = '';
+  bool isImageEnabled = true; // Track whether image functionality is enabled
   final ImagePicker _picker = ImagePicker();
-  DateTime? selectedDate;
   final TextEditingController locationController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController phoneNumberController = TextEditingController();
 
   Future<void> _tfliteInit() async {
     await Tflite.loadModel(
@@ -77,51 +60,71 @@ class _CapturePageState extends State<CapturePage> {
     }
   }
 
-  Future<void> pickImageCamera() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.camera);
-    if (image == null) return;
-    var imageMap = File(image.path);
+Future<void> saveReport(String status) async {
+  try {
+    String? imageUrl;
+
+    // Determine the category based on the label
+    final String category = isImageEnabled
+        ? (label.contains('physical')
+            ? 'potential_physical_abuse'
+            : label.contains('psychological')
+                ? 'potential_psychological_abuse'
+                : 'general')
+        : 'general';
+    final String collection = status == 'Draft' ? 'drafts' : 'submissions';
+
+    // Upload image if applicable
+    if (filePath != null && isImageEnabled && category != 'general') {
+      final String fileName = DateTime.now().millisecondsSinceEpoch.toString();
+      final Reference storageRef = FirebaseStorage.instance.ref().child('images/$fileName');
+      final UploadTask uploadTask = storageRef.putFile(filePath!);
+      final TaskSnapshot snapshot = await uploadTask.whenComplete(() {});
+      imageUrl = await snapshot.ref.getDownloadURL();  // Get the image URL
+    }
+
+    // Prepare report data
+    final reportData = {
+      'name': nameController.text,
+      'phone_number': phoneNumberController.text,
+      'location': locationController.text,
+      'description': descriptionController.text,
+      'label': isImageEnabled ? label : 'general',
+      'image_url': imageUrl ?? 'https://example.com/default-image.png', // Add default image URL if no image is uploaded
+      'status': status,
+      'timestamp': FieldValue.serverTimestamp(),
+    };
+
+    // Save to Firestore
+    await FirebaseFirestore.instance
+        .collection('reports')
+        .doc(category)
+        .collection(collection)
+        .add(reportData);
+
+    devtools.log('$status report saved successfully');
+
+    // Clear fields after saving
     setState(() {
-      filePath = imageMap;
+      filePath = null;
+      label = '';
+      nameController.clear();
+      phoneNumberController.clear();
+      locationController.clear();
+      descriptionController.clear();
     });
-
-    var recognitions = await Tflite.runModelOnImage(
-      path: image.path,
-      imageMean: 0.0,
-      imageStd: 255.0,
-      numResults: 2,
-      threshold: 0.2,
-      asynch: true,
-    );
-
-    if (recognitions != null && recognitions.isNotEmpty) {
-      setState(() {
-        label = recognitions[0]['label'].toString();
-      });
-    } else {
-      devtools.log("Recognition failed");
-    }
+  } catch (e) {
+    devtools.log('Error saving report: $e');
   }
-
-  Future<void> selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
-    );
-    if (picked != null && picked != selectedDate) {
-      setState(() {
-        selectedDate = picked;
-      });
-    }
-  }
+}
 
   @override
   void dispose() {
     Tflite.close();
     locationController.dispose();
     descriptionController.dispose();
+    nameController.dispose();
+    phoneNumberController.dispose();
     super.dispose();
   }
 
@@ -131,6 +134,16 @@ class _CapturePageState extends State<CapturePage> {
     _tfliteInit();
   }
 
+  // Toggle the image functionality (On/Off)
+  void toggleImageFunctionality() {
+    setState(() {
+      isImageEnabled = !isImageEnabled;
+      if (!isImageEnabled) {
+        filePath = null; // Clear the filePath if images are disabled
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -138,7 +151,7 @@ class _CapturePageState extends State<CapturePage> {
       appBar: AppBar(
         backgroundColor: Colors.purple[100],
         title: Text(
-          'BreakFree.',
+          'BreakFree. ',
           style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold),
         ),
         leading: IconButton(
@@ -161,84 +174,98 @@ class _CapturePageState extends State<CapturePage> {
                 style: GoogleFonts.poppins(fontSize: 12),
               ),
               const SizedBox(height: 20),
-              Container(
-                width: 280,
-                height: 210,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
-                  borderRadius: BorderRadius.circular(0),
-                  image: const DecorationImage(image: AssetImage('assets/picture.png')),
-                ),
-                child: filePath != null
-                    ? Image.file(
-                        filePath!,
-                        fit: BoxFit.cover,
-                      )
-                    : const Center(
-                        child: Text(''),
-                      ),
-              ),
-              const SizedBox(height: 20),
 
-              // Take Photo and Upload from Gallery buttons
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: pickImageCamera,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 45, 15, 51),
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                      ),
-                      child: Text(
-                        "Take Photo",
-                        style: GoogleFonts.poppins(fontSize: 14, color: Colors.white),
-                      ),
+              // Image-related UI if enabled
+              if (isImageEnabled) ...[
+                Container(
+                  width: 280,
+                  height: 210,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(0),
+                    image: const DecorationImage(image: AssetImage('assets/picture.png')),
+                  ),
+                  child: filePath != null
+                      ? Image.file(
+                          filePath!,
+                          fit: BoxFit.cover,
+                        )
+                      : const Center(child: Text('')),
+                ),
+                const SizedBox(height: 10),
+
+                // Browse Gallery button with defined width
+                SizedBox(
+                  width: 200,
+                  child: ElevatedButton(
+                    onPressed: pickImageGallery,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(255, 45, 15, 51),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                    ),
+                    child: Text(
+                      "Browse Gallery",
+                      style: GoogleFonts.poppins(fontSize: 14, color: Colors.white),
                     ),
                   ),
-                  const SizedBox(width: 10), // Add spacing between buttons
+                ),
+                const SizedBox(height: 8),
+              ],
+
+              // Checkbox and Label with reduced spacing
+              Row(
+                children: [
                   Expanded(
-                    child: ElevatedButton(
-                      onPressed: pickImageGallery,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 45, 15, 51),
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                    child: CheckboxListTile(
+                      title: Text(
+                        'Attach image in the report?',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontStyle: FontStyle.italic,
+                          color: const Color.fromARGB(255, 96, 32, 109),
+                        ),
                       ),
-                      child: Text(
-                        "Browse Gallery",
-                        style: GoogleFonts.poppins(fontSize: 14, color: Colors.white),
-                      ),
+                      value: isImageEnabled,
+                      onChanged: (value) {
+                        toggleImageFunctionality();
+                      },
+                      activeColor: const Color.fromARGB(255, 45, 15, 51),
+                      controlAffinity: ListTileControlAffinity.leading, // Position the checkbox to the left of the text
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
+
+              // Label with reduced spacing from the checkbox
               Text(
                 label,
                 style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 20),
 
-              // Date Input
+              // Name Input
+              const SizedBox(height: 10),
               TextField(
-                controller: TextEditingController(
-                    text: selectedDate != null
-                        ? "${selectedDate!.month}/${selectedDate!.day}/${selectedDate!.year}"
-                        : ""),
+                controller: nameController,
                 decoration: const InputDecoration(
-                  labelText: "Date",
-                  prefixIcon: Icon(Icons.calendar_today),
+                  labelText: 'Name',
                   border: OutlineInputBorder(),
                 ),
-                readOnly: true,
-                onTap: () => selectDate(context),
               ),
+
+              // Phone Number Input
               const SizedBox(height: 10),
+              TextField(
+                controller: phoneNumberController,
+                keyboardType: TextInputType.phone,
+                decoration: const InputDecoration(
+                  labelText: 'Phone Number',
+                  border: OutlineInputBorder(),
+                ),
+              ),
 
               // Location Input
+              const SizedBox(height: 10),
               TextField(
                 controller: locationController,
                 decoration: const InputDecoration(
@@ -264,18 +291,14 @@ class _CapturePageState extends State<CapturePage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   ElevatedButton(
-                    onPressed: () {
-                      // Handle draft button press
-                    },
+                    onPressed: () => saveReport('Draft'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color.fromARGB(255, 45, 15, 51),
                     ),
                     child: Text('Draft', style: GoogleFonts.poppins(color: Colors.white)),
                   ),
                   ElevatedButton(
-                    onPressed: () {
-                      // Handle submit button press
-                    },
+                    onPressed: () => saveReport('Submitted'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color.fromARGB(255, 45, 15, 51),
                     ),
@@ -321,7 +344,7 @@ class _CapturePageState extends State<CapturePage> {
                   Navigator.pushNamed(context, '/home');
                 },
               ),
-              const SizedBox(width: 40), // Space for the SOS button in the center
+              const SizedBox(width: 40),
               IconButton(
                 icon: const Icon(Icons.person),
                 onPressed: () {
