@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_tflite/flutter_tflite.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import 'dart:developer' as devtools;
 
 class CapturePage extends StatefulWidget {
@@ -17,7 +19,7 @@ class CapturePage extends StatefulWidget {
 class _CapturePageState extends State<CapturePage> {
   File? filePath;
   String label = '';
-  bool isImageEnabled = true; // Track whether image functionality is enabled
+  bool isImageEnabled = true;
   final ImagePicker _picker = ImagePicker();
   final TextEditingController locationController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
@@ -33,6 +35,58 @@ class _CapturePageState extends State<CapturePage> {
       useGpuDelegate: false,
     );
   }
+
+ Future<void> _getCurrentLocation() async {
+  bool serviceEnabled;
+  LocationPermission permission;
+
+  serviceEnabled = await Geolocator.isLocationServiceEnabled();
+  if (!serviceEnabled) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Location services are disabled.', style: GoogleFonts.poppins(color: Colors.red))),
+    );
+    return;
+  }
+
+  permission = await Geolocator.checkPermission();
+  if (permission == LocationPermission.denied) {
+    permission = await Geolocator.requestPermission();
+    if (permission == LocationPermission.denied) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Location permissions are denied.', style: GoogleFonts.poppins(color: Colors.red))),
+      );
+      return;
+    }
+  }
+
+  if (permission == LocationPermission.deniedForever) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Location permissions are permanently denied.', style: GoogleFonts.poppins(color: Colors.red))),
+    );
+    return;
+  }
+
+  try {
+    final position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+
+    final placeMarks = await placemarkFromCoordinates(
+      position.latitude, position.longitude,
+    );
+
+    if (placeMarks.isNotEmpty) {
+      final place = placeMarks[0];
+      setState(() {
+        locationController.text = "${place.locality}, ${place.administrativeArea}";
+      });
+    }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Failed to get location: $e', style: GoogleFonts.poppins(color: Colors.red))),
+    );
+  }
+}
 
   Future<void> pickImageGallery() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
@@ -60,63 +114,100 @@ class _CapturePageState extends State<CapturePage> {
     }
   }
 
-Future<void> saveReport(String status) async {
-  try {
-    String? imageUrl;
-
-    // Determine the category based on the label
-    final String category = isImageEnabled
-        ? (label.contains('physical')
-            ? 'potential_physical_abuse'
-            : label.contains('psychological')
-                ? 'potential_psychological_abuse'
-                : 'general')
-        : 'general';
-    final String collection = status == 'Draft' ? 'drafts' : 'submissions';
-
-    // Upload image if applicable
-    if (filePath != null && isImageEnabled && category != 'general') {
-      final String fileName = DateTime.now().millisecondsSinceEpoch.toString();
-      final Reference storageRef = FirebaseStorage.instance.ref().child('images/$fileName');
-      final UploadTask uploadTask = storageRef.putFile(filePath!);
-      final TaskSnapshot snapshot = await uploadTask.whenComplete(() {});
-      imageUrl = await snapshot.ref.getDownloadURL();  // Get the image URL
+  Future<void> saveReport(String status) async {
+    if (nameController.text.isEmpty || phoneNumberController.text.isEmpty || locationController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Name, Phone Number, and Location are required fields.', style: GoogleFonts.poppins(color: Colors.red)),
+          backgroundColor: Colors.white,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+      return;
     }
 
-    // Prepare report data
-    final reportData = {
-      'name': nameController.text,
-      'phone_number': phoneNumberController.text,
-      'location': locationController.text,
-      'description': descriptionController.text,
-      'label': isImageEnabled ? label : 'general',
-      'image_url': imageUrl ?? 'https://example.com/default-image.png', // Add default image URL if no image is uploaded
-      'status': status,
-      'timestamp': FieldValue.serverTimestamp(),
-    };
+    try {
+      String? imageUrl;
 
-    // Save to Firestore
-    await FirebaseFirestore.instance
-        .collection('reports')
-        .doc(category)
-        .collection(collection)
-        .add(reportData);
+      final String category = isImageEnabled
+          ? (label.contains('physical')
+              ? 'potential_physical_abuse'
+              : label.contains('psychological')
+                  ? 'potential_psychological_abuse'
+                  : 'other_potential_forms_of_violence')
+          : 'other_potential_forms_of_violence';
+      final String collection = status == 'In Progress' ? 'drafts' : 'submissions';
 
-    devtools.log('$status report saved successfully');
+       if (filePath != null && isImageEnabled && category != 'other_potential_forms_of_violence') {
+      final String fileName = DateTime.now().millisecondsSinceEpoch.toString();
+      final Reference storageRef = FirebaseStorage.instance.ref().child('images/$fileName');
+      
+      // Upload the image file
+      final UploadTask uploadTask = storageRef.putFile(filePath!);
 
-    // Clear fields after saving
-    setState(() {
-      filePath = null;
-      label = '';
-      nameController.clear();
-      phoneNumberController.clear();
-      locationController.clear();
-      descriptionController.clear();
-    });
-  } catch (e) {
-    devtools.log('Error saving report: $e');
+      // Wait for the upload to complete and get the download URL
+      final TaskSnapshot snapshot = await uploadTask.whenComplete(() {});
+      imageUrl = await snapshot.ref.getDownloadURL();
+
+      // Proceed with Firestore upload with the image URL
+    } else {
+      imageUrl = 'https://example.com/default-image.png'; // Default image if no file is uploaded
+    }
+
+      final reportData = {
+        'name': nameController.text,
+        'phone_number': phoneNumberController.text,
+        'location': locationController.text,
+        'description': descriptionController.text,
+        'label': isImageEnabled ? label : 'other_potential_forms_of_violence',
+        'image_url': imageUrl,
+        'status': status,
+        'timestamp': FieldValue.serverTimestamp(),
+      };
+
+      await FirebaseFirestore.instance
+          .collection('reports')
+          .doc(category)
+          .collection(collection)
+          .add(reportData);
+
+      devtools.log('$status report saved successfully');
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            status == 'In Progress' ? 'Report saved as Draft' : 'Report submitted successfully!',
+            style: GoogleFonts.poppins(color: Colors.red),
+          ),
+          backgroundColor: Colors.white,
+          duration: const Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        ),
+      );
+
+      setState(() {
+        filePath = null;
+        label = '';
+        nameController.clear();
+        phoneNumberController.clear();
+        locationController.clear();
+        descriptionController.clear();
+      });
+    } catch (e) {
+      devtools.log('Error saving report: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Error saving report. Please try again!',
+            style: GoogleFonts.poppins(color: Colors.red),
+          ),
+          backgroundColor: Colors.white,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
   }
-}
 
   @override
   void dispose() {
@@ -134,12 +225,11 @@ Future<void> saveReport(String status) async {
     _tfliteInit();
   }
 
-  // Toggle the image functionality (On/Off)
   void toggleImageFunctionality() {
     setState(() {
       isImageEnabled = !isImageEnabled;
       if (!isImageEnabled) {
-        filePath = null; // Clear the filePath if images are disabled
+        filePath = null;
       }
     });
   }
@@ -175,7 +265,6 @@ Future<void> saveReport(String status) async {
               ),
               const SizedBox(height: 20),
 
-              // Image-related UI if enabled
               if (isImageEnabled) ...[
                 Container(
                   width: 280,
@@ -194,7 +283,6 @@ Future<void> saveReport(String status) async {
                 ),
                 const SizedBox(height: 10),
 
-                // Browse Gallery button with defined width
                 SizedBox(
                   width: 200,
                   child: ElevatedButton(
@@ -213,7 +301,6 @@ Future<void> saveReport(String status) async {
                 const SizedBox(height: 8),
               ],
 
-              // Checkbox and Label with reduced spacing
               Row(
                 children: [
                   Expanded(
@@ -231,19 +318,17 @@ Future<void> saveReport(String status) async {
                         toggleImageFunctionality();
                       },
                       activeColor: const Color.fromARGB(255, 45, 15, 51),
-                      controlAffinity: ListTileControlAffinity.leading, // Position the checkbox to the left of the text
+                      controlAffinity: ListTileControlAffinity.leading,
                     ),
                   ),
                 ],
               ),
 
-              // Label with reduced spacing from the checkbox
               Text(
                 label,
                 style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
               ),
 
-              // Name Input
               const SizedBox(height: 10),
               TextField(
                 controller: nameController,
@@ -253,7 +338,6 @@ Future<void> saveReport(String status) async {
                 ),
               ),
 
-              // Phone Number Input
               const SizedBox(height: 10),
               TextField(
                 controller: phoneNumberController,
@@ -264,18 +348,32 @@ Future<void> saveReport(String status) async {
                 ),
               ),
 
-              // Location Input
               const SizedBox(height: 10),
-              TextField(
-                controller: locationController,
-                decoration: const InputDecoration(
-                  labelText: 'Location',
-                  border: OutlineInputBorder(),
+            Row(
+              children: [
+                Flexible(
+                  flex: 1, // Adjust this value to control the width of the icon
+                  child: IconButton(
+                    icon: Icon(Icons.location_on, color: const Color.fromARGB(255, 45, 15, 51)),
+                    onPressed: _getCurrentLocation,
+                  ),
                 ),
-              ),
+                const SizedBox(width: 5), // Reduce the gap here
+                Expanded(
+                  flex: 6, // Let the TextField take the remaining space
+                  child: TextField(
+                    controller: locationController,
+                    decoration: const InputDecoration(
+                      labelText: 'Location',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
               const SizedBox(height: 10),
 
-              // Description Input
               TextField(
                 controller: descriptionController,
                 decoration: const InputDecoration(
@@ -286,12 +384,11 @@ Future<void> saveReport(String status) async {
               ),
               const SizedBox(height: 10),
 
-              // Draft and Submit Buttons
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   ElevatedButton(
-                    onPressed: () => saveReport('Draft'),
+                    onPressed: () => saveReport('In Progress'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color.fromARGB(255, 45, 15, 51),
                     ),

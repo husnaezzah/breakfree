@@ -7,14 +7,14 @@ class HistoryPage extends StatelessWidget {
 
   // Fetch reports from Firestore based on status
   Stream<List<Map<String, dynamic>>> fetchReports(String status) async* {
-    final categories = ['potential_physical_abuse', 'potential_psychological_abuse', 'general'];
+    final categories = ['potential_physical_abuse', 'potential_psychological_abuse', 'other_potential_forms_of_violence'];
     List<Map<String, dynamic>> reports = [];
 
     for (String category in categories) {
       final QuerySnapshot snapshot = await FirebaseFirestore.instance
           .collection('reports')
           .doc(category)
-          .collection(status == 'Draft' ? 'drafts' : 'submissions')
+          .collection(status == 'In Progress' ? 'drafts' : 'submissions') // Updated collection
           .get();
 
       for (var doc in snapshot.docs) {
@@ -58,33 +58,33 @@ class HistoryPage extends StatelessWidget {
               ),
               const SizedBox(height: 20),
 
-              // Drafts Section
+              // In Progress Section
               Text(
-                "Drafts",
+                "Draft",
                 style: GoogleFonts.poppins(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black,
-                ),
+                                  color: Colors.black,
               ),
+            ),
               const SizedBox(height: 10),
-              StreamBuilder<List<Map<String, dynamic>>>(  
-                stream: fetchReports('Draft'),
+              StreamBuilder<List<Map<String, dynamic>>>(
+                stream: fetchReports('In Progress'), // Fetch "In Progress" reports
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const CircularProgressIndicator();
+                    return const Center(child: CircularProgressIndicator());
                   }
-                  final drafts = snapshot.data ?? [];
+                  final inProgressReports = snapshot.data ?? [];
                   return ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: drafts.length,
+                    itemCount: inProgressReports.length,
                     itemBuilder: (context, index) {
-                      final draft = drafts[index];
+                      final report = inProgressReports[index];
                       return _buildHistoryBox(
-                        imageUrl: draft['image_url'],  // Retrieve image URL from Firestore
-                        title: draft['label'] ?? 'General',
-                        description: draft['description'] ?? '',
+                        imageUrl: report['image_url'], // Retrieve image URL from Firestore
+                        title: report['label'] ?? 'Other Potential Forms of Violence',
+                        description: report['status'] ?? '',
                       );
                     },
                   );
@@ -94,7 +94,7 @@ class HistoryPage extends StatelessWidget {
 
               // Recents Section
               Text(
-                "Recents",
+                "Recent",
                 style: GoogleFonts.poppins(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -102,23 +102,23 @@ class HistoryPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
-              StreamBuilder<List<Map<String, dynamic>>>(  
-                stream: fetchReports('Submitted'),
+              StreamBuilder<List<Map<String, dynamic>>>(
+                stream: fetchReports('Submitted'), // Fetch "Submitted" reports
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const CircularProgressIndicator();
+                    return const Center(child: CircularProgressIndicator());
                   }
-                  final recents = snapshot.data ?? [];
+                  final recentReports = snapshot.data ?? [];
                   return ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: recents.length,
+                    itemCount: recentReports.length,
                     itemBuilder: (context, index) {
-                      final recent = recents[index];
+                      final report = recentReports[index];
                       return _buildHistoryBox(
-                        imageUrl: recent['image_url'],  // Retrieve image URL from Firestore
-                        title: recent['label'] ?? 'General',
-                        description: recent['description'] ?? '',
+                        imageUrl: report['image_url'], // Retrieve image URL from Firestore
+                        title: report['label'] ?? 'Other Potential Forms of Violence',
+                        description: report['status'] ?? '',
                       );
                     },
                   );
@@ -176,13 +176,12 @@ class HistoryPage extends StatelessWidget {
     );
   }
 
-  // Reusable Widget for Drafts and Recents with Image Handling
+  // Reusable Widget for History Boxes
   Widget _buildHistoryBox({
     required String? imageUrl,
     required String title,
     required String description,
   }) {
-    // Use a default image URL if no image URL is available
     final String imageToDisplay = imageUrl ?? 'https://example.com/default-image.png';
 
     return Container(
@@ -205,7 +204,7 @@ class HistoryPage extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
             ),
             child: imageUrl != null
-                ? Image.network(imageToDisplay, fit: BoxFit.cover)  // Load image from Firestore URL
+                ? Image.network(imageToDisplay, fit: BoxFit.cover)
                 : Icon(
                     Icons.image_outlined,
                     size: 35,
