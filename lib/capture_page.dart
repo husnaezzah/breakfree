@@ -436,14 +436,18 @@ class _CapturePageState extends State<CapturePage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
-                icon: const Icon(Icons.home),
+                icon: const Icon(
+                Icons.home,
+                color: Colors.black),
                 onPressed: () {
                   Navigator.pushNamed(context, '/home');
                 },
               ),
               const SizedBox(width: 40),
               IconButton(
-                icon: const Icon(Icons.person),
+                icon: const Icon(
+                Icons.person,
+                color: Colors.black),
                 onPressed: () {
                   Navigator.pushNamed(context, '/profile');
                 },

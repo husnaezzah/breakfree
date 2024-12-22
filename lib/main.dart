@@ -8,6 +8,7 @@ import 'capture_page.dart';
 import 'qa_page.dart';
 import 'assistance_page.dart';
 import 'history_page.dart';
+import 'sos_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();  // Ensure Flutter is initialized before Firebase
@@ -34,6 +35,7 @@ class MyApp extends StatelessWidget {
         '/qa': (context) => QAPage(), // this is qa page
         '/assistance': (context) => AssistancePage(), // this is assistance page
         '/history': (context) => HistoryPage(), // this is history page
+        '/sos': (context) => SOSPage(), // this is sos page 
       },
     );
   }
