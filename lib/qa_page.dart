@@ -112,12 +112,20 @@ class _QAPageState extends State<QAPage> {
         title: Text(
           "BreakFree Chatbot",
           style: GoogleFonts.poppins(
-            color: Colors.black,
+            color: Color.fromARGB(255, 251, 247, 247),
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
-        backgroundColor: Colors.purple[100],
+        leading: ModalRoute.of(context)?.settings.name == '/home'
+        ? null 
+        : IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+          },
+        ),
+        backgroundColor: const Color.fromARGB(255, 96, 32, 109),
       ),
       body: Column(
         children: [
@@ -187,7 +195,9 @@ class _QAPageState extends State<QAPage> {
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.send),
+                  icon: Icon(
+                    Icons.send,
+                    color: const Color.fromARGB(255, 96, 32, 109)),
                   onPressed: () {
                     if (_controller.text.isNotEmpty) {
                       _sendMessage(_controller.text);

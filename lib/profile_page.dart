@@ -44,14 +44,33 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Define the consistent TextStyle
+    final textStyle = GoogleFonts.roboto(
+      fontSize: 16,
+      color: Color.fromARGB(255, 114, 37, 129),
+      fontWeight: FontWeight.bold,
+    );
+
     return Scaffold(
-      backgroundColor: Colors.purple[50],
+      backgroundColor: Color.fromARGB(255, 251, 247, 247),
       appBar: AppBar(
-        backgroundColor: Colors.purple[100],
+        backgroundColor: const Color.fromARGB(255, 96, 32, 109),
         title: Text(
           'BreakFree.',
-          style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold),
+          style: GoogleFonts.poppins(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Color.fromARGB(255, 251, 247, 247),
+          ),
         ),
+        leading: ModalRoute.of(context)?.settings.name == '/home'
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: () {
+                  Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+                },
+              ),
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -62,8 +81,8 @@ class ProfilePage extends StatelessWidget {
               Text(
                 'Features',
                 style: GoogleFonts.poppins(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
               SizedBox(height: 10),
@@ -74,6 +93,7 @@ class ProfilePage extends StatelessWidget {
                   _buildProfileButton(
                     Icons.history,
                     'History',
+                    textStyle,
                     () {
                       Navigator.pushNamed(context, '/history');
                     },
@@ -81,8 +101,9 @@ class ProfilePage extends StatelessWidget {
 
                   // Health Button
                   _buildProfileButton(
-                    Icons.favorite,
+                    Icons.favorite_outline,
                     'Health',
+                    textStyle,
                     () {
                       _showHealthDialog(context);
                     },
@@ -90,8 +111,9 @@ class ProfilePage extends StatelessWidget {
 
                   // Settings Button
                   _buildProfileButton(
-                    Icons.settings,
+                    Icons.settings_outlined,
                     'Settings',
+                    textStyle,
                     () {
                       _toggleSoundSettings(context);
                     },
@@ -102,8 +124,8 @@ class ProfilePage extends StatelessWidget {
               Text(
                 'Information',
                 style: GoogleFonts.poppins(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
               SizedBox(height: 10),
@@ -138,61 +160,16 @@ class ProfilePage extends StatelessWidget {
           ),
         ),
       ),
-      floatingActionButton: SizedBox(
-        width: 70,
-        height: 70,
-        child: FloatingActionButton(
-          onPressed: () {
-            Navigator.pushNamed(context, '/sos');
-          },
-          backgroundColor: Colors.red,
-          shape: CircleBorder(),
-          child: Text(
-            'SOS',
-            style: GoogleFonts.poppins(
-              fontSize: 20,
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(
-        color: Colors.purple[100],
-        shape: CircularNotchedRectangle(),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton(
-                icon: Icon(Icons.home, color: Colors.purple),
-                onPressed: () {
-                  Navigator.pushNamed(context, '/home');
-                },
-              ),
-              SizedBox(width: 40), // Space for the SOS button in the center
-              IconButton(
-                icon: Icon(Icons.person),
-                onPressed: () {
-                  Navigator.pushNamed(context, '/profile');
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 
-  Widget _buildProfileButton(IconData icon, String label, Function onPressed) {
+  Widget _buildProfileButton(IconData icon, String label, TextStyle style, VoidCallback onPressed) {
     return Column(
       children: [
         ElevatedButton(
-          onPressed: () => onPressed(),
+          onPressed: onPressed,
           style: ElevatedButton.styleFrom(
-            foregroundColor: Colors.purple,
+            foregroundColor: Colors.black,
             backgroundColor: Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(15),
@@ -208,11 +185,7 @@ class ProfilePage extends StatelessWidget {
         SizedBox(height: 10),
         Text(
           label,
-          style: GoogleFonts.poppins(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.purple,
-          ),
+          style: style,
         ),
       ],
     );
@@ -236,7 +209,7 @@ class InformationCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Colors.purple, width: 2),
+        border: Border.all(color: const Color.fromARGB(255, 96, 32, 109), width: 2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

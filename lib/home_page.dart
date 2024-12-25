@@ -9,12 +9,18 @@ class HomePage extends StatelessWidget {
     final double screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      backgroundColor: Colors.purple[50],
+      backgroundColor: Color.fromARGB(255, 251, 247, 247), // Background app color changed to white
       appBar: AppBar(
-        backgroundColor: Colors.purple[100],
-        title: Text(
-          'BreakFree.',
-          style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold),
+        backgroundColor: const Color.fromARGB(255, 96, 32, 109), // AppBar remains purple
+        title: Center( // Center the title
+          child: Text(
+            'BreakFree.',
+            style: GoogleFonts.poppins(
+              fontSize: 24, 
+              fontWeight: FontWeight.bold, 
+              color: Color.fromARGB(255, 251, 247, 247),
+            ),
+          ),
         ),
       ),
       body: Center(
@@ -43,7 +49,7 @@ class HomePage extends StatelessWidget {
                     Navigator.pushNamed(context, '/capture');
                   },
                   style: ElevatedButton.styleFrom(
-                    foregroundColor: Colors.purple,
+                    foregroundColor: const Color.fromARGB(255, 96, 32, 109),
                     backgroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
@@ -62,8 +68,8 @@ class HomePage extends StatelessWidget {
                       Text(
                         'Capture',
                         style: GoogleFonts.roboto(
-                          fontSize: 18,
-                          color: Colors.purple,
+                          fontSize: 16,
+                          color: Color.fromARGB(255, 114, 37, 129),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -132,7 +138,7 @@ class HomePage extends StatelessWidget {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
 
       bottomNavigationBar: BottomAppBar(
-        color: Colors.purple[100],
+        color: Colors.white, // Bottom navigation bar color changed to white
         shape: CircularNotchedRectangle(),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -140,14 +146,17 @@ class HomePage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
-                icon: Icon(Icons.home, color: Colors.purple),
+                icon: Icon(Icons.home, color: Color.fromARGB(255, 114, 37, 129)),
                 onPressed: () {
                   Navigator.pushNamed(context, '/home');
                 },
               ),
               SizedBox(width: 40), // Space for the SOS button in the center
               IconButton(
-                icon: Icon(Icons.person),
+                icon: Icon(
+                  Icons.person,
+                  color: ModalRoute.of(context)?.settings.name == '/profile' ? Color(0xFFAD8FC6) : Colors.black,
+                ),
                 onPressed: () {
                   Navigator.pushNamed(context, '/profile');
                 },
@@ -175,12 +184,12 @@ class HomePage extends StatelessWidget {
           }
         },
         style: ElevatedButton.styleFrom(
-          foregroundColor: Colors.purple,
-          backgroundColor: Colors.white,
+          foregroundColor: const Color.fromARGB(255, 96, 32, 109), // Text and icon color
+          backgroundColor: Colors.white, // Button background color
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
+            borderRadius: BorderRadius.circular(30), // Rounded corners
           ),
-          padding: EdgeInsets.all(10),
+          padding: EdgeInsets.all(10), // Padding inside the button
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -188,14 +197,14 @@ class HomePage extends StatelessWidget {
             Icon(
               icon,
               size: screenWidth * 0.1,
-              color: Colors.black,
+              color: Colors.black, // Icon color
             ),
             SizedBox(height: 10),
             Text(
               label,
               style: GoogleFonts.roboto(
                 fontSize: 16,
-                color: Colors.purple,
+                color: Color.fromARGB(255, 96, 32, 109), // Label color
                 fontWeight: FontWeight.bold,
               ),
             ),

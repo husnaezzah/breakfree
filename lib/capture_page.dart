@@ -237,16 +237,23 @@ class _CapturePageState extends State<CapturePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.purple[50],
+      backgroundColor: Color.fromARGB(255, 251, 247, 247),
       appBar: AppBar(
-        backgroundColor: Colors.purple[100],
+        backgroundColor: const Color.fromARGB(255, 96, 32, 109),
         title: Text(
           'BreakFree. ',
-          style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+          style: GoogleFonts.poppins(
+            fontSize: 24, 
+            fontWeight: FontWeight.bold,
+            color: Color.fromARGB(255, 251, 247, 247)),
+        ), 
+        leading: ModalRoute.of(context)?.settings.name == '/home'
+        ? null 
+        : IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+          },
         ),
       ),
       body: Padding(
@@ -288,7 +295,7 @@ class _CapturePageState extends State<CapturePage> {
                   child: ElevatedButton(
                     onPressed: pickImageGallery,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 45, 15, 51),
+                      backgroundColor: const Color.fromARGB(255, 96, 32, 109),
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                     ),
@@ -317,7 +324,7 @@ class _CapturePageState extends State<CapturePage> {
                       onChanged: (value) {
                         toggleImageFunctionality();
                       },
-                      activeColor: const Color.fromARGB(255, 45, 15, 51),
+                      activeColor: const Color.fromARGB(255, 96, 32, 109),
                       controlAffinity: ListTileControlAffinity.leading,
                     ),
                   ),
@@ -354,7 +361,7 @@ class _CapturePageState extends State<CapturePage> {
                 Flexible(
                   flex: 1, // Adjust this value to control the width of the icon
                   child: IconButton(
-                    icon: Icon(Icons.location_on, color: const Color.fromARGB(255, 45, 15, 51)),
+                    icon: Icon(Icons.location_on, color: const Color.fromARGB(255, 96, 32, 109),),
                     onPressed: _getCurrentLocation,
                   ),
                 ),
@@ -390,67 +397,18 @@ class _CapturePageState extends State<CapturePage> {
                   ElevatedButton(
                     onPressed: () => saveReport('In Progress'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 45, 15, 51),
+                      backgroundColor: const Color.fromARGB(255, 96, 32, 109),
                     ),
                     child: Text('Draft', style: GoogleFonts.poppins(color: Colors.white)),
                   ),
                   ElevatedButton(
                     onPressed: () => saveReport('Submitted'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 45, 15, 51),
+                      backgroundColor: const Color.fromARGB(255, 96, 32, 109),
                     ),
                     child: Text('Submit', style: GoogleFonts.poppins(fontSize: 14, color: Colors.white)),
                   ),
                 ],
-              ),
-            ],
-          ),
-        ),
-      ),
-      floatingActionButton: SizedBox(
-        width: 70,
-        height: 70,
-        child: FloatingActionButton(
-          onPressed: () {
-            Navigator.pushNamed(context, '/sos');
-          },
-          backgroundColor: Colors.red,
-          shape: const CircleBorder(),
-          child: Text(
-            'SOS',
-            style: GoogleFonts.poppins(
-              fontSize: 20,
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(
-        color: Colors.purple[100],
-        shape: const CircularNotchedRectangle(),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton(
-                icon: const Icon(
-                Icons.home,
-                color: Colors.black),
-                onPressed: () {
-                  Navigator.pushNamed(context, '/home');
-                },
-              ),
-              const SizedBox(width: 40),
-              IconButton(
-                icon: const Icon(
-                Icons.person,
-                color: Colors.black),
-                onPressed: () {
-                  Navigator.pushNamed(context, '/profile');
-                },
               ),
             ],
           ),
