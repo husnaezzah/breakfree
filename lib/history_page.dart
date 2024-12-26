@@ -28,18 +28,25 @@ class HistoryPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.purple[50],
+      backgroundColor: Color.fromARGB(255, 251, 247, 247),
       appBar: AppBar(
-        backgroundColor: Colors.purple[100],
-        centerTitle: true,
+        backgroundColor: const Color.fromARGB(255, 96, 32, 109),
         title: Text(
           'BreakFree.',
           style: GoogleFonts.poppins(
             fontSize: 24,
             fontWeight: FontWeight.bold,
-            color: Colors.black,
+            color: Color.fromARGB(255, 251, 247, 247),
           ),
         ),
+        leading: ModalRoute.of(context)?.settings.name == '/profile'
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: () {
+                  Navigator.pushNamedAndRemoveUntil(context, '/profile', (route) => false);
+                },
+              ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -64,11 +71,11 @@ class HistoryPage extends StatelessWidget {
                 style: GoogleFonts.poppins(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                                  color: Colors.black,
+                  color: Colors.black,
+                ),
               ),
-            ),
               const SizedBox(height: 10),
-              StreamBuilder<List<Map<String, dynamic>>>(
+              StreamBuilder<List<Map<String, dynamic>>>( 
                 stream: fetchReports('In Progress'), // Fetch "In Progress" reports
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
@@ -77,12 +84,11 @@ class HistoryPage extends StatelessWidget {
                   final inProgressReports = snapshot.data ?? [];
                   return ListView.builder(
                     shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
+                    physics: const AlwaysScrollableScrollPhysics(),
                     itemCount: inProgressReports.length,
                     itemBuilder: (context, index) {
                       final report = inProgressReports[index];
                       return _buildHistoryBox(
-                        imageUrl: report['image_url'], // Retrieve image URL from Firestore
                         title: report['label'] ?? 'Other Potential Forms of Violence',
                         description: report['status'] ?? '',
                       );
@@ -102,7 +108,7 @@ class HistoryPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
-              StreamBuilder<List<Map<String, dynamic>>>(
+              StreamBuilder<List<Map<String, dynamic>>>( 
                 stream: fetchReports('Submitted'), // Fetch "Submitted" reports
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
@@ -111,12 +117,11 @@ class HistoryPage extends StatelessWidget {
                   final recentReports = snapshot.data ?? [];
                   return ListView.builder(
                     shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
+                    physics: const AlwaysScrollableScrollPhysics(),
                     itemCount: recentReports.length,
                     itemBuilder: (context, index) {
                       final report = recentReports[index];
                       return _buildHistoryBox(
-                        imageUrl: report['image_url'], // Retrieve image URL from Firestore
                         title: report['label'] ?? 'Other Potential Forms of Violence',
                         description: report['status'] ?? '',
                       );
@@ -149,26 +154,28 @@ class HistoryPage extends StatelessWidget {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
-        color: Colors.purple[100],
-        shape: const CircularNotchedRectangle(),
+        color: Colors.white, // Bottom navigation bar color changed to white
+        shape: CircularNotchedRectangle(),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
-                icon: const Icon(
-                Icons.home,
-                color: Colors.black),
+                icon: Icon(
+                  Icons.home,
+                  color: ModalRoute.of(context)?.settings.name == '/home' ?  Color(0xFFAD8FC6) : Colors.black,
+                ),
                 onPressed: () {
-                  Navigator.pushNamed(context, '/home');
+                  Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
                 },
               ),
-              const SizedBox(width: 40),
+              SizedBox(width: 40), // Space for the SOS button in the center
               IconButton(
-                icon: const Icon(
-                Icons.person,
-                color: Colors.black),
+                icon: Icon(
+                  Icons.person,
+                  color: ModalRoute.of(context)?.settings.name == '/profile' ? Color(0xFFAD8FC6) : Colors.black,
+                ),
                 onPressed: () {
                   Navigator.pushNamed(context, '/profile');
                 },
@@ -182,12 +189,9 @@ class HistoryPage extends StatelessWidget {
 
   // Reusable Widget for History Boxes
   Widget _buildHistoryBox({
-    required String? imageUrl,
     required String title,
     required String description,
   }) {
-    final String imageToDisplay = imageUrl ?? 'https://example.com/default-image.png';
-
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
@@ -199,22 +203,7 @@ class HistoryPage extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Image section
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: imageUrl != null
-                ? Image.network(imageToDisplay, fit: BoxFit.cover)
-                : Icon(
-                    Icons.image_outlined,
-                    size: 35,
-                    color: Colors.purple[300],
-                  ),
-          ),
+          // Removed Image section
           const SizedBox(width: 12),
           Expanded(
             child: Column(

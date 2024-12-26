@@ -8,81 +8,70 @@ class QAPage extends StatefulWidget {
 
 class _QAPageState extends State<QAPage> {
   final TextEditingController _controller = TextEditingController();
-  final List<Map<String, dynamic>> _messages = []; // Use dynamic type to store Image widgets
+  final List<Map<String, dynamic>> _messages = [];
 
   // Simulate bot responses based on simple keywords or questions
   void _getBotResponse(String message) {
     if (message.toLowerCase().contains("hello") || message.toLowerCase().contains("hi")) {
       _addTextResponse("Hello! How can I assist you today?");
-
     } else if (message.toLowerCase().contains("domestic") || message.toLowerCase().contains("violence")) {
       setState(() {
         _messages.add({
           "bot_image": Image.asset(
             "assets/learn.png",
-            width: 450, // Set desired width
-            height: 450, // Set desired height
+            width: 450,
+            height: 450,
           ),
         });
         _messages.add({
           "bot_image": Image.asset(
             "assets/symptom.png",
-            width: 450, // Set desired width
-            height: 450, // Set desired height
+            width: 450,
+            height: 450,
           ),
         });
         _messages.add({
           "bot_image": Image.asset(
             "assets/sign.png",
-            width: 450, // Set desired width
-            height: 450, // Set desired height
+            width: 450,
+            height: 450,
           ),
         });
         _addTextResponse("Domestic violence is a serious issue, and BreakFree is here to provide support, resources, and information.");
       });
-
     } else if (message.toLowerCase().contains("sign") || message.toLowerCase().contains("symptom")) {
       setState(() {
         _messages.add({
           "bot_image": Image.asset(
             "assets/sign.png",
-            width: 450, // Set desired width
-            height: 450, // Set desired height
+            width: 450,
+            height: 450,
           ),
         });
       });
-
     } else if (message.toLowerCase().contains("what") || message.toLowerCase().contains("do")) {
       _addTextResponse("Contact us and lodge your report now through our Capture feature.");
-
     } else if (message.toLowerCase().contains("resources")) {
       _addTextResponse("Our app provides local resources including nearby shelters, hospitals, and hotlines. You can find help close by anytime.");
-
     } else if (message.toLowerCase().contains("emergency")) {
       _addTextResponse("Activate SOS button now!");
-
     } else if (message.toLowerCase().contains("help")) {
-      // Add an image response for help or emergency
       setState(() {
         _messages.add({
           "bot_image": Image.asset(
             "assets/sign.png",
-            width: 450, // Set desired width
-            height: 450, // Set desired height
+            width: 450,
+            height: 450,
           ),
         });
         _addTextResponse("OR Press the SOS button.");
       });
-
     } else if (message.toLowerCase().contains("confidentiality")) {
       _addTextResponse("Your privacy and safety are our top priorities. We offer data security to keep your information secure.");
-
     } else if (message.toLowerCase().contains("trauma")) {
       _addTextResponse("Our app is designed to be sensitive to trauma, avoiding potentially triggering content while offering support resources.");
-      
     } else if (message.toLowerCase().contains("stigma")) {
       _addTextResponse("We understand the fear of stigma. Our app offers anonymous support, so you can access help privately and securely.");
-      
     } else {
       _addTextResponse("I'm here to help, but I didn't quite understand that. Could you please rephrase?");
     }
@@ -135,18 +124,16 @@ class _QAPageState extends State<QAPage> {
               itemBuilder: (context, index) {
                 final message = _messages[index];
 
-                // Check if the message contains an image widget
                 if (message.containsKey("bot_image")) {
                   return Align(
                     alignment: Alignment.centerLeft,
                     child: Padding(
                       padding: EdgeInsets.all(8.0),
-                      child: message["bot_image"], // Directly use the Image widget
+                      child: message["bot_image"],
                     ),
                   );
                 }
 
-                // Handle text messages
                 return ListTile(
                   title: Align(
                     alignment: message.containsKey("user")
@@ -165,7 +152,7 @@ class _QAPageState extends State<QAPage> {
                             ? message["user"]!
                             : message["bot"]!,
                         style: GoogleFonts.poppins(
-                          fontSize: screenWidth * 0.04,  // Dynamic font size
+                          fontSize: screenWidth * 0.04,
                           fontWeight: FontWeight.normal,
                         ),
                       ),
@@ -185,7 +172,7 @@ class _QAPageState extends State<QAPage> {
                     decoration: InputDecoration(
                       hintText: "Ask a question...",
                       hintStyle: GoogleFonts.poppins(
-                        fontSize: screenWidth * 0.04,  // Dynamic hint text size
+                        fontSize: screenWidth * 0.04,
                         color: Colors.grey[500],
                       ),
                       border: OutlineInputBorder(
@@ -208,6 +195,57 @@ class _QAPageState extends State<QAPage> {
             ),
           ),
         ],
+      ),
+      floatingActionButton: SizedBox(
+        width: 70,
+        height: 70,
+        child: FloatingActionButton(
+          onPressed: () {
+            Navigator.pushNamed(context, '/sos');
+          },
+          backgroundColor: Colors.red,
+          shape: const CircleBorder(),
+          child: Text(
+            'SOS',
+            style: GoogleFonts.poppins(
+              fontSize: 20,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: BottomAppBar(
+        color: Colors.white,
+        shape: CircularNotchedRectangle(),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                icon: Icon(
+                  Icons.home,
+                  color: ModalRoute.of(context)?.settings.name == '/home' ?  Color(0xFFAD8FC6) : Colors.black,
+                ),
+                onPressed: () {
+                  Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+                },
+              ),
+              SizedBox(width: 40), // Space for the SOS button in the center
+              IconButton(
+                icon: Icon(
+                  Icons.person,
+                  color: ModalRoute.of(context)?.settings.name == '/profile' ? Color(0xFFAD8FC6) : Colors.black,
+                ),
+                onPressed: () {
+                  Navigator.pushNamed(context, '/profile');
+                },
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
