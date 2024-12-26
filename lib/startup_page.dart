@@ -20,7 +20,7 @@ class _StartupPageState extends State<StartupPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFD8CFE8), // Light purple background color
+      backgroundColor: const Color.fromARGB(255, 96, 32, 109), // Dark purple background color
       body: Center(
         child: Container(
           // Container holding all elements

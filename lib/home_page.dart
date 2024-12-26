@@ -11,18 +11,25 @@ class HomePage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Color.fromARGB(255, 251, 247, 247), // Background app color changed to white
       appBar: AppBar(
-        backgroundColor: const Color.fromARGB(255, 96, 32, 109), // AppBar remains purple
-        title: Center( // Center the title
-          child: Text(
-            'BreakFree.',
-            style: GoogleFonts.poppins(
-              fontSize: 24, 
-              fontWeight: FontWeight.bold, 
-              color: Color.fromARGB(255, 251, 247, 247),
-            ),
-          ),
-        ),
+  backgroundColor: const Color.fromARGB(255, 96, 32, 109), // AppBar remains purple
+  title: Center(
+    child: Text(
+      'BreakFree.',
+      style: GoogleFonts.poppins(
+        fontSize: 24, 
+        fontWeight: FontWeight.bold, 
+        color: Color.fromARGB(255, 251, 247, 247),
       ),
+    ),
+  ),
+  leading: ModalRoute.of(context)?.settings.name == '/home' ? null : IconButton(
+    icon: const Icon(Icons.arrow_back, color: Colors.white),
+    onPressed: () {
+      Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+    },
+  ),
+),
+
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -146,9 +153,11 @@ class HomePage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
-                icon: Icon(Icons.home, color: Color.fromARGB(255, 114, 37, 129)),
+                icon: Icon(
+                  Icons.home,
+                  color: Color.fromARGB(255, 114, 37, 129)),
                 onPressed: () {
-                  Navigator.pushNamed(context, '/home');
+                  Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
                 },
               ),
               SizedBox(width: 40), // Space for the SOS button in the center

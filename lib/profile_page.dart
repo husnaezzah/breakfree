@@ -129,32 +129,79 @@ class ProfilePage extends StatelessWidget {
                 ),
               ),
               SizedBox(height: 10),
-              // Talian Kasih Card
+              // Information Cards
               InformationCard(
                 title: 'Talian Kasih 15999',
                 description:
                     'Talian Kasih provides a 24-hour helpline for counseling and support for domestic violence survivors. Call 15999 or WhatsApp +6019-261 5999 for assistance.',
               ),
               SizedBox(height: 10),
-              // WAO Card
               InformationCard(
                 title: 'Women’s Aid Organization (WAO)',
                 description:
                     'WAO provides shelter, counseling, and support for domestic violence survivors in Malaysia. Visit wao.org.my or call +603-7956 3488.',
               ),
               SizedBox(height: 10),
-              // Police Emergency Assistance
               InformationCard(
                 title: 'Police Emergency Assistance',
                 description:
                     'Contact the nearest police station or call 999 in case of immediate danger or threat.',
               ),
               SizedBox(height: 10),
-              // LPPKN Counseling Services
               InformationCard(
                 title: 'LPPKN Counseling Services',
                 description:
                     'The National Population and Family Development Board (LPPKN) offers free counseling services for those affected by domestic violence. Call 03-2693 7555 for help.',
+              ),
+            ],
+          ),
+        ),
+      ),
+      floatingActionButton: SizedBox(
+        width: 70,
+        height: 70,
+        child: FloatingActionButton(
+          onPressed: () {
+            Navigator.pushNamed(context, '/sos');
+          },
+          backgroundColor: Colors.red,
+          shape: const CircleBorder(),
+          child: Text(
+            'SOS',
+            style: GoogleFonts.poppins(
+              fontSize: 20,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: BottomAppBar(
+        color: Colors.white, // Bottom navigation bar color
+        shape: CircularNotchedRectangle(),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                icon: Icon(
+                  Icons.home,
+                  color: ModalRoute.of(context)?.settings.name == '/home' ? Color(0xFFAD8FC6) : Colors.black,
+                ),
+                onPressed: () {
+                  Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+                },
+              ),
+              SizedBox(width: 40), // Space for the SOS button in the center
+              IconButton(
+                icon: Icon(
+                  Icons.person,
+                  color: Color.fromARGB(255, 114, 37, 129)),
+                onPressed: () {
+                  Navigator.pushNamed(context, '/profile');
+                },
               ),
             ],
           ),

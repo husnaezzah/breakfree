@@ -36,57 +36,57 @@ class _CapturePageState extends State<CapturePage> {
     );
   }
 
- Future<void> _getCurrentLocation() async {
-  bool serviceEnabled;
-  LocationPermission permission;
+  Future<void> _getCurrentLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
 
-  serviceEnabled = await Geolocator.isLocationServiceEnabled();
-  if (!serviceEnabled) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Location services are disabled.', style: GoogleFonts.poppins(color: Colors.red))),
-    );
-    return;
-  }
-
-  permission = await Geolocator.checkPermission();
-  if (permission == LocationPermission.denied) {
-    permission = await Geolocator.requestPermission();
-    if (permission == LocationPermission.denied) {
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Location permissions are denied.', style: GoogleFonts.poppins(color: Colors.red))),
+        SnackBar(content: Text('Location services are disabled.', style: GoogleFonts.poppins(color: Colors.red))),
       );
       return;
     }
-  }
 
-  if (permission == LocationPermission.deniedForever) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Location permissions are permanently denied.', style: GoogleFonts.poppins(color: Colors.red))),
-    );
-    return;
-  }
-
-  try {
-    final position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-    );
-
-    final placeMarks = await placemarkFromCoordinates(
-      position.latitude, position.longitude,
-    );
-
-    if (placeMarks.isNotEmpty) {
-      final place = placeMarks[0];
-      setState(() {
-        locationController.text = "${place.locality}, ${place.administrativeArea}";
-      });
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Location permissions are denied.', style: GoogleFonts.poppins(color: Colors.red))),
+        );
+        return;
+      }
     }
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Failed to get location: $e', style: GoogleFonts.poppins(color: Colors.red))),
-    );
+
+    if (permission == LocationPermission.deniedForever) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Location permissions are permanently denied.', style: GoogleFonts.poppins(color: Colors.red))),
+      );
+      return;
+    }
+
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      final placeMarks = await placemarkFromCoordinates(
+        position.latitude, position.longitude,
+      );
+
+      if (placeMarks.isNotEmpty) {
+        final place = placeMarks[0];
+        setState(() {
+          locationController.text = "${place.locality}, ${place.administrativeArea}";
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to get location: $e', style: GoogleFonts.poppins(color: Colors.red))),
+      );
+    }
   }
-}
 
   Future<void> pickImageGallery() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
@@ -138,21 +138,19 @@ class _CapturePageState extends State<CapturePage> {
           : 'other_potential_forms_of_violence';
       final String collection = status == 'In Progress' ? 'drafts' : 'submissions';
 
-       if (filePath != null && isImageEnabled && category != 'other_potential_forms_of_violence') {
-      final String fileName = DateTime.now().millisecondsSinceEpoch.toString();
-      final Reference storageRef = FirebaseStorage.instance.ref().child('images/$fileName');
-      
-      // Upload the image file
-      final UploadTask uploadTask = storageRef.putFile(filePath!);
+      if (filePath != null && isImageEnabled && category != 'other_potential_forms_of_violence') {
+        final String fileName = DateTime.now().millisecondsSinceEpoch.toString();
+        final Reference storageRef = FirebaseStorage.instance.ref().child('images/$fileName');
 
-      // Wait for the upload to complete and get the download URL
-      final TaskSnapshot snapshot = await uploadTask.whenComplete(() {});
-      imageUrl = await snapshot.ref.getDownloadURL();
+        // Upload the image file
+        final UploadTask uploadTask = storageRef.putFile(filePath!);
 
-      // Proceed with Firestore upload with the image URL
-    } else {
-      imageUrl = 'https://example.com/default-image.png'; // Default image if no file is uploaded
-    }
+        // Wait for the upload to complete and get the download URL
+        final TaskSnapshot snapshot = await uploadTask.whenComplete(() {});
+        imageUrl = await snapshot.ref.getDownloadURL();
+      } else {
+        imageUrl = 'https://example.com/default-image.png'; // Default image if no file is uploaded
+      }
 
       final reportData = {
         'name': nameController.text,
@@ -409,6 +407,58 @@ class _CapturePageState extends State<CapturePage> {
                     child: Text('Submit', style: GoogleFonts.poppins(fontSize: 14, color: Colors.white)),
                   ),
                 ],
+              ),
+            ],
+          ),
+        ),
+      ),
+      // Navigation bar addition
+      floatingActionButton: SizedBox(
+        width: 70,
+        height: 70,
+        child: FloatingActionButton(
+          onPressed: () {
+            Navigator.pushNamed(context, '/sos');
+          },
+          backgroundColor: Colors.red,
+          shape: const CircleBorder(),
+          child: Text(
+            'SOS',
+            style: GoogleFonts.poppins(
+              fontSize: 20,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: BottomAppBar(
+        color: Colors.white, // Bottom navigation bar color changed to white
+        shape: CircularNotchedRectangle(),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                icon: Icon(
+                  Icons.home,
+                  color: ModalRoute.of(context)?.settings.name == '/home' ? Color(0xFFAD8FC6) : Colors.black,
+                ),
+                onPressed: () {
+                  Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+                },
+              ),
+              SizedBox(width: 40), // Space for the SOS button in the center
+              IconButton(
+                icon: Icon(
+                  Icons.person,
+                  color: ModalRoute.of(context)?.settings.name == '/profile' ? Color(0xFFAD8FC6) : Colors.black,
+                ),
+                onPressed: () {
+                  Navigator.pushNamed(context, '/profile');
+                },
               ),
             ],
           ),
