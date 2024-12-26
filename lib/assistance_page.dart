@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
 
 class AssistancePage extends StatefulWidget {
   const AssistancePage({super.key});
@@ -15,15 +17,18 @@ class _AssistancePageState extends State<AssistancePage> {
   GoogleMapController? mapController;
   Position? _currentPosition;
   Set<Marker> _markers = {};
+  Set<Polyline> _polylines = {};
   bool _isLoading = true;
 
   final LatLng _initialLocation = LatLng(2.9362, 101.7046); // Putrajaya coordinates
+
+  // List to store support points
+  List<Widget> _supportPoints = [];
 
   @override
   void initState() {
     super.initState();
     _getCurrentLocation();
-    _addCustomMarkers();
   }
 
   Future<void> _getCurrentLocation() async {
@@ -61,21 +66,50 @@ class _AssistancePageState extends State<AssistancePage> {
         );
       }
     });
+
+    // Once the position is fetched, update the markers and support points
+    _addCustomMarkers();
+  }
+
+  double _calculateDistance(LatLng point1, LatLng point2) {
+    // Use Geolocator to calculate distance between two points in meters
+    return Geolocator.distanceBetween(
+      point1.latitude,
+      point1.longitude,
+      point2.latitude,
+      point2.longitude,
+    ) / 1000; // Convert meters to kilometers
   }
 
   void _addCustomMarkers() {
+    if (_currentPosition == null) return; // Don't proceed if current location is not available
+
     // Define custom marker icons
     BitmapDescriptor policeIcon = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue);
     BitmapDescriptor hospitalIcon = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed);
+
+    // Coordinates of the support points
+    LatLng policeStation = LatLng(2.9470, 101.6775); // Corrected Precinct 11 Police Station coordinates
+    LatLng hospital = LatLng(2.9431, 101.7190); // Corrected Putrajaya Hospital coordinates
+
+    // Calculate distance from user's current position to support points
+    double policeStationDistance = _calculateDistance(
+      LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+      policeStation,
+    );
+    double hospitalDistance = _calculateDistance(
+      LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+      hospital,
+    );
 
     // Add Precinct 11 Putrajaya Police Station marker
     _markers.add(
       Marker(
         markerId: const MarkerId('precinct_11_police'),
-        position: const LatLng(2.9362, 101.7046), // Replace with actual coordinates
+        position: policeStation,
         icon: policeIcon,
         infoWindow: const InfoWindow(
-          title: 'Precinct 11 Putrajaya Police Station',
+          title: 'Police Station Presint 11',
           snippet: '24 Hours Open',
         ),
       ),
@@ -85,10 +119,10 @@ class _AssistancePageState extends State<AssistancePage> {
     _markers.add(
       Marker(
         markerId: const MarkerId('putrajaya_hospital'),
-        position: const LatLng(2.9295, 101.6804), // Replace with actual coordinates
+        position: hospital,
         icon: hospitalIcon,
         infoWindow: const InfoWindow(
-          title: 'Putrajaya Hospital',
+          title: 'Putrajaya Hospital Presint 7',
           snippet: '24 Hours Emergency',
         ),
       ),
@@ -97,24 +131,71 @@ class _AssistancePageState extends State<AssistancePage> {
     setState(() {
       _isLoading = false;
     });
+
+    // Add support point cards with distances
+    _supportPoints = [
+      SupportPointCard(
+        title: 'Police Station Presint 11',
+        distance: '${policeStationDistance.toStringAsFixed(2)} km',
+        icon: Icons.local_police,
+        onViewPressed: () {
+          _viewLocationWithRoute(policeStation);
+        },
+      ),
+      SupportPointCard(
+        title: 'Putrajaya Hospital Presint 7',
+        distance: '${hospitalDistance.toStringAsFixed(2)} km',
+        icon: Icons.local_hospital,
+        onViewPressed: () {
+          _viewLocationWithRoute(hospital);
+        },
+      ),
+    ];
   }
 
-  void _onMapCreated(GoogleMapController controller) {
-    mapController = controller;
-    if (_currentPosition != null) {
-      mapController!.animateCamera(
-        CameraUpdate.newLatLng(
-          LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
-        ),
-      );
+  // View Location Function with Route
+  Future<void> _viewLocationWithRoute(LatLng destination) async {
+    if (_currentPosition == null) return;
+
+    final String url =
+        'https://router.project-osrm.org/route/v1/driving/${_currentPosition!.longitude},${_currentPosition!.latitude};${destination.longitude},${destination.latitude}?overview=full&geometries=geojson';
+
+    final response = await http.get(Uri.parse(url));
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final List<dynamic> coordinates = data['routes'][0]['geometry']['coordinates'];
+
+      final List<LatLng> points = coordinates
+          .map((coordinate) => LatLng(coordinate[1], coordinate[0]))
+          .toList();
+
+      setState(() {
+        _polylines.clear();
+        _polylines.add(Polyline(
+          polylineId: PolylineId(destination.toString()),
+          color: Colors.blue,
+          width: 5,
+          points: points,
+        ));
+
+        mapController!.animateCamera(
+          CameraUpdate.newLatLngBounds(
+            LatLngBounds(
+              southwest: points.reduce((a, b) => LatLng(
+                a.latitude < b.latitude ? a.latitude : b.latitude,
+                a.longitude < b.longitude ? a.longitude : b.longitude,
+              )),
+              northeast: points.reduce((a, b) => LatLng(
+                a.latitude > b.latitude ? a.latitude : b.latitude,
+                a.longitude > b.longitude ? a.longitude : b.longitude,
+              )),
+            ),
+            50,
+          ),
+        );
+      });
     }
-  }
-
-  // View Location Function
-  void _viewLocation(LatLng location) {
-    mapController!.animateCamera(
-      CameraUpdate.newLatLngZoom(location, 15),
-    );
   }
 
   @override
@@ -130,13 +211,13 @@ class _AssistancePageState extends State<AssistancePage> {
           ),
         ),
         leading: ModalRoute.of(context)?.settings.name == '/home'
-        ? null 
-        : IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
-          },
-        ),
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: () {
+                  Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+                },
+              ),
         backgroundColor: const Color.fromARGB(255, 96, 32, 109),
       ),
       body: Padding(
@@ -162,12 +243,13 @@ class _AssistancePageState extends State<AssistancePage> {
                   myLocationButtonEnabled: true,
                   zoomControlsEnabled: true,
                   markers: _markers,
+                  polylines: _polylines,
                 ),
               ),
             ),
             const SizedBox(height: 10),
             Text(
-              'Support Points',
+              ' Nearest Support Points',
               style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
@@ -175,22 +257,7 @@ class _AssistancePageState extends State<AssistancePage> {
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : ListView(
-                      children: [
-                        SupportPointCard(
-                          title: 'Precinct 11 Putrajaya Police Station',
-                          distance: '24 Hours Open',
-                          onViewPressed: () {
-                            _viewLocation(const LatLng(2.9362, 101.7046));
-                          },
-                        ),
-                        SupportPointCard(
-                          title: 'Putrajaya Hospital',
-                          distance: '24 Hours Emergency',
-                          onViewPressed: () {
-                            _viewLocation(const LatLng(2.9295, 101.6804));
-                          },
-                        ),
-                      ],
+                      children: _supportPoints,
                     ),
             ),
           ],
@@ -198,17 +265,30 @@ class _AssistancePageState extends State<AssistancePage> {
       ),
     );
   }
+
+  void _onMapCreated(GoogleMapController controller) {
+    mapController = controller;
+    if (_currentPosition != null) {
+      mapController!.animateCamera(
+        CameraUpdate.newLatLng(
+          LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+        ),
+      );
+    }
+  }
 }
 
 class SupportPointCard extends StatelessWidget {
   final String title;
   final String distance;
+  final IconData icon;
   final VoidCallback onViewPressed;
 
   const SupportPointCard({
     Key? key,
     required this.title,
     required this.distance,
+    required this.icon,
     required this.onViewPressed,
   }) : super(key: key);
 
@@ -220,7 +300,7 @@ class SupportPointCard extends StatelessWidget {
       ),
       child: ListTile(
         leading: Icon(
-          Icons.location_pin,
+          icon,
           size: 40,
           color: const Color.fromARGB(255, 96, 32, 109),
         ),
@@ -228,7 +308,7 @@ class SupportPointCard extends StatelessWidget {
           title,
           style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold),
         ),
-        subtitle: Text('Vicinity: $distance'),
+        subtitle: Text('Distance: $distance'),
         trailing: ElevatedButton(
           onPressed: onViewPressed,
           style: ElevatedButton.styleFrom(
