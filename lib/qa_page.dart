@@ -196,57 +196,6 @@ class _QAPageState extends State<QAPage> {
           ),
         ],
       ),
-      floatingActionButton: SizedBox(
-        width: 70,
-        height: 70,
-        child: FloatingActionButton(
-          onPressed: () {
-            Navigator.pushNamed(context, '/sos');
-          },
-          backgroundColor: Colors.red,
-          shape: const CircleBorder(),
-          child: Text(
-            'SOS',
-            style: GoogleFonts.poppins(
-              fontSize: 20,
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(
-        color: Colors.white,
-        shape: CircularNotchedRectangle(),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton(
-                icon: Icon(
-                  Icons.home,
-                  color: ModalRoute.of(context)?.settings.name == '/home' ?  Color(0xFFAD8FC6) : Colors.black,
-                ),
-                onPressed: () {
-                  Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
-                },
-              ),
-              SizedBox(width: 40), // Space for the SOS button in the center
-              IconButton(
-                icon: Icon(
-                  Icons.person,
-                  color: ModalRoute.of(context)?.settings.name == '/profile' ? Color(0xFFAD8FC6) : Colors.black,
-                ),
-                onPressed: () {
-                  Navigator.pushNamed(context, '/profile');
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

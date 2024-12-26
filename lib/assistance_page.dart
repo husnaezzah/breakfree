@@ -22,7 +22,6 @@ class _AssistancePageState extends State<AssistancePage> {
 
   final LatLng _initialLocation = LatLng(2.9362, 101.7046); // Putrajaya coordinates
 
-  // List to store support points
   List<Widget> _supportPoints = [];
 
   @override
@@ -67,12 +66,10 @@ class _AssistancePageState extends State<AssistancePage> {
       }
     });
 
-    // Once the position is fetched, update the markers and support points
     _addCustomMarkers();
   }
 
   double _calculateDistance(LatLng point1, LatLng point2) {
-    // Use Geolocator to calculate distance between two points in meters
     return Geolocator.distanceBetween(
       point1.latitude,
       point1.longitude,
@@ -82,27 +79,14 @@ class _AssistancePageState extends State<AssistancePage> {
   }
 
   void _addCustomMarkers() {
-    if (_currentPosition == null) return; // Don't proceed if current location is not available
+    if (_currentPosition == null) return;
 
-    // Define custom marker icons
     BitmapDescriptor policeIcon = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue);
     BitmapDescriptor hospitalIcon = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed);
 
-    // Coordinates of the support points
-    LatLng policeStation = LatLng(2.9470, 101.6775); // Corrected Precinct 11 Police Station coordinates
-    LatLng hospital = LatLng(2.9431, 101.7190); // Corrected Putrajaya Hospital coordinates
+    LatLng policeStation = LatLng(2.9309, 101.6754);
+    LatLng hospital = LatLng(2.9295, 101.6742);
 
-    // Calculate distance from user's current position to support points
-    double policeStationDistance = _calculateDistance(
-      LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
-      policeStation,
-    );
-    double hospitalDistance = _calculateDistance(
-      LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
-      hospital,
-    );
-
-    // Add Precinct 11 Putrajaya Police Station marker
     _markers.add(
       Marker(
         markerId: const MarkerId('precinct_11_police'),
@@ -110,12 +94,10 @@ class _AssistancePageState extends State<AssistancePage> {
         icon: policeIcon,
         infoWindow: const InfoWindow(
           title: 'Police Station Presint 11',
-          snippet: '24 Hours Open',
         ),
       ),
     );
 
-    // Add Putrajaya Hospital marker
     _markers.add(
       Marker(
         markerId: const MarkerId('putrajaya_hospital'),
@@ -123,7 +105,6 @@ class _AssistancePageState extends State<AssistancePage> {
         icon: hospitalIcon,
         infoWindow: const InfoWindow(
           title: 'Putrajaya Hospital Presint 7',
-          snippet: '24 Hours Emergency',
         ),
       ),
     );
@@ -132,28 +113,26 @@ class _AssistancePageState extends State<AssistancePage> {
       _isLoading = false;
     });
 
-    // Add support point cards with distances
     _supportPoints = [
       SupportPointCard(
         title: 'Police Station Presint 11',
-        distance: '${policeStationDistance.toStringAsFixed(2)} km',
         icon: Icons.local_police,
         onViewPressed: () {
           _viewLocationWithRoute(policeStation);
         },
+         description: '24 Hours Open',
       ),
       SupportPointCard(
         title: 'Putrajaya Hospital Presint 7',
-        distance: '${hospitalDistance.toStringAsFixed(2)} km',
         icon: Icons.local_hospital,
         onViewPressed: () {
           _viewLocationWithRoute(hospital);
         },
+        description: '24 Hours Emergency',
       ),
     ];
   }
 
-  // View Location Function with Route
   Future<void> _viewLocationWithRoute(LatLng destination) async {
     if (_currentPosition == null) return;
 
@@ -206,7 +185,7 @@ class _AssistancePageState extends State<AssistancePage> {
           "BreakFree.",
           style: GoogleFonts.poppins(
             color: Color.fromARGB(255, 251, 247, 247),
-            fontSize: 20,
+            fontSize: 24,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -263,6 +242,57 @@ class _AssistancePageState extends State<AssistancePage> {
           ],
         ),
       ),
+      floatingActionButton: SizedBox(
+        width: 70,
+        height: 70,
+        child: FloatingActionButton(
+          onPressed: () {
+            Navigator.pushNamed(context, '/sos');
+          },
+          backgroundColor: Colors.red,
+          shape: const CircleBorder(),
+          child: Text(
+            'SOS',
+            style: GoogleFonts.poppins(
+              fontSize: 20,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: BottomAppBar(
+        color: Colors.white,
+        shape: CircularNotchedRectangle(),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                icon: Icon(
+                  Icons.home,
+                  color: ModalRoute.of(context)?.settings.name == '/home' ?  Color(0xFFAD8FC6) : Colors.black,
+                ),
+                onPressed: () {
+                  Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+                },
+              ),
+              SizedBox(width: 40), // Space for the SOS button in the center
+              IconButton(
+                icon: Icon(
+                  Icons.person,
+                  color: ModalRoute.of(context)?.settings.name == '/profile' ? Color(0xFFAD8FC6) : Colors.black,
+                ),
+                onPressed: () {
+                  Navigator.pushNamed(context, '/profile');
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -280,16 +310,16 @@ class _AssistancePageState extends State<AssistancePage> {
 
 class SupportPointCard extends StatelessWidget {
   final String title;
-  final String distance;
   final IconData icon;
   final VoidCallback onViewPressed;
+  final String description;
 
   const SupportPointCard({
     Key? key,
     required this.title,
-    required this.distance,
     required this.icon,
     required this.onViewPressed,
+    required this.description, 
   }) : super(key: key);
 
   @override
@@ -308,7 +338,7 @@ class SupportPointCard extends StatelessWidget {
           title,
           style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold),
         ),
-        subtitle: Text('Distance: $distance'),
+        subtitle: Text(description),
         trailing: ElevatedButton(
           onPressed: onViewPressed,
           style: ElevatedButton.styleFrom(
