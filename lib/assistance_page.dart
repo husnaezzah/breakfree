@@ -226,6 +226,17 @@ class _AssistancePageState extends State<AssistancePage> {
                 ),
               ),
             ),
+            Center(
+              child: Text(
+              'Tap on the map pins to view details, get directions, or open Google Maps for more options.',
+              style: GoogleFonts.poppins(
+                fontSize: 10,
+                fontStyle: FontStyle.italic,
+                color: Colors.grey,
+              ),
+              textAlign: TextAlign.center,
+              ),
+            ),
             const SizedBox(height: 10),
             Text(
               ' Nearest Support Points',

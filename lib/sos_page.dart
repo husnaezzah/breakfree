@@ -113,7 +113,7 @@ showDialog(
   }
 
   Future<void> initiateCall() async {
-    final Uri phoneNumber = Uri(scheme: 'tel', path: '+60143519230'); // Correct phone number format
+    final Uri phoneNumber = Uri(scheme: 'tel', path: '15999'); // Correct phone number format
     if (await canLaunchUrl(phoneNumber)) {
       await launchUrl(phoneNumber);
     } else {

@@ -102,7 +102,7 @@ class _QAPageState extends State<QAPage> {
           "BreakFree Chatbot",
           style: GoogleFonts.poppins(
             color: Color.fromARGB(255, 251, 247, 247),
-            fontSize: 20,
+            fontSize: 22,
             fontWeight: FontWeight.bold,
           ),
         ),
