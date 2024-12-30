@@ -84,27 +84,75 @@ class _AssistancePageState extends State<AssistancePage> {
     BitmapDescriptor policeIcon = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue);
     BitmapDescriptor hospitalIcon = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed);
 
-    LatLng policeStation = LatLng(2.9309, 101.6754);
-    LatLng hospital = LatLng(2.9295, 101.6742);
+    LatLng gombakPolice = LatLng(3.218796, 101.71331);
+    LatLng primaSriGombakPolice = LatLng(3.236619, 101.69982);
+    LatLng tamanMelawatiPolice = LatLng(3.212182, 101.747218);
+    LatLng columbiaAsiaHospital = LatLng(3.2010, 101.7183);
+    LatLng damaiServiceHospital = LatLng(3.1701, 101.6950);
+    LatLng kualaLumpurHospital = LatLng(3.171362, 101.701736);
 
     _markers.add(
       Marker(
-        markerId: const MarkerId('precinct_11_police'),
-        position: policeStation,
+        markerId: const MarkerId('gombak_police'),
+        position: gombakPolice,
         icon: policeIcon,
         infoWindow: const InfoWindow(
-          title: 'Police Station Presint 11',
+          title: 'Gombak Police Station',
+        ),
+      ),
+    );
+
+     _markers.add(
+      Marker(
+        markerId: const MarkerId('prima_sri_gombak_police'),
+        position: primaSriGombakPolice,
+        icon: policeIcon,
+        infoWindow: const InfoWindow(
+          title: 'Prima Sri Gombak Police Station',
+        ),
+      ),
+    );
+
+      _markers.add(
+      Marker(
+        markerId: const MarkerId('taman_melawati_police'),
+        position: tamanMelawatiPolice,
+        icon: policeIcon,
+        infoWindow: const InfoWindow(
+          title: 'Taman Melawati Police Station',
+        ),
+      ),
+    );
+
+     _markers.add(
+      Marker(
+        markerId: const MarkerId('columbia_asia_hospital'),
+        position: columbiaAsiaHospital,
+        icon: hospitalIcon,
+        infoWindow: const InfoWindow(
+          title: 'Columbia Asia Hospital',
         ),
       ),
     );
 
     _markers.add(
       Marker(
-        markerId: const MarkerId('putrajaya_hospital'),
-        position: hospital,
+        markerId: const MarkerId('damai_service_hospital'),
+        position: damaiServiceHospital,
         icon: hospitalIcon,
         infoWindow: const InfoWindow(
-          title: 'Putrajaya Hospital Presint 7',
+          title: 'Damai Service Hospital HQ',
+        ),
+      ),
+    );
+
+    _markers.add(
+      Marker(
+        markerId: const MarkerId('kuala_lumpur_hospital'),
+        position: kualaLumpurHospital,
+        icon: hospitalIcon,
+        infoWindow: const InfoWindow(
+          title: 'Kuala Lumpur Hospital',
         ),
       ),
     );
@@ -115,20 +163,52 @@ class _AssistancePageState extends State<AssistancePage> {
 
     _supportPoints = [
       SupportPointCard(
-        title: 'Police Station Presint 11',
+        title: 'Gombak Police Station',
         icon: Icons.local_police,
         onViewPressed: () {
-          _viewLocationWithRoute(policeStation);
+          _viewLocationWithRoute(gombakPolice);
         },
-         description: '24 Hours Open',
+        description: 'Open 24 Hours',
       ),
       SupportPointCard(
-        title: 'Putrajaya Hospital Presint 7',
+        title: 'Prima Sri Gombak Police Station',
+        icon: Icons.local_police,
+        onViewPressed: () {
+          _viewLocationWithRoute(primaSriGombakPolice);
+        },
+        description: 'Open 24 Hours',
+      ),
+      SupportPointCard(
+        title: 'Taman Melawati Police Station',
+        icon: Icons.local_police,
+        onViewPressed: () {
+          _viewLocationWithRoute(tamanMelawatiPolice);
+        },
+        description: 'Open 24 Hours',
+      ),
+      SupportPointCard(
+        title: 'Columbia Asia Hospital',
         icon: Icons.local_hospital,
         onViewPressed: () {
-          _viewLocationWithRoute(hospital);
+          _viewLocationWithRoute(columbiaAsiaHospital);
         },
-        description: '24 Hours Emergency',
+        description: 'Emergency Services Available',
+      ),
+      SupportPointCard(
+        title: 'Damai Service Hospital HQ',
+        icon: Icons.local_hospital,
+        onViewPressed: () {
+          _viewLocationWithRoute(damaiServiceHospital);
+        },
+        description: 'Specialist Services Available',
+      ),
+      SupportPointCard(
+        title: 'Kuala Lumpur Hospital',
+        icon: Icons.local_hospital,
+        onViewPressed: () {
+          _viewLocationWithRoute(kualaLumpurHospital);
+        },
+        description: 'Emergency Services Available',
       ),
     ];
   }
@@ -347,7 +427,7 @@ class SupportPointCard extends StatelessWidget {
         ),
         title: Text(
           title,
-          style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold),
+          style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         subtitle: Text(description),
         trailing: ElevatedButton(
