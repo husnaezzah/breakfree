@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 class HistoryPage extends StatelessWidget {
   const HistoryPage({Key? key}) : super(key: key);
 
-  // Fetch reports from Firestore based on status
   Stream<List<Map<String, dynamic>>> fetchReports(String status) async* {
     final categories = ['potential_physical_abuse', 'potential_psychological_abuse', 'other_potential_forms_of_violence'];
     List<Map<String, dynamic>> reports = [];
@@ -14,11 +13,15 @@ class HistoryPage extends StatelessWidget {
       final QuerySnapshot snapshot = await FirebaseFirestore.instance
           .collection('reports')
           .doc(category)
-          .collection(status == 'In Progress' ? 'drafts' : 'submissions') // Updated collection
+          .collection(status == 'In Progress' ? 'drafts' : 'submissions')
           .get();
 
       for (var doc in snapshot.docs) {
-        reports.add(doc.data() as Map<String, dynamic>);
+        reports.add({
+          ...doc.data() as Map<String, dynamic>,
+          'id': doc.id, // Include document ID
+          'category': category, // Include category for navigation
+        });
       }
     }
 
@@ -54,29 +57,16 @@ class HistoryPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // History Title
-              Text(
-                "History",
-                style: GoogleFonts.poppins(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // In Progress Section
               Text(
                 "Draft",
                 style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 10),
-              StreamBuilder<List<Map<String, dynamic>>>( 
-                stream: fetchReports('In Progress'), // Fetch "In Progress" reports
+              StreamBuilder<List<Map<String, dynamic>>>(
+                stream: fetchReports('In Progress'),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
@@ -91,25 +81,29 @@ class HistoryPage extends StatelessWidget {
                       return _buildHistoryBox(
                         title: report['label'] ?? 'Other Potential Forms of Violence',
                         description: report['status'] ?? '',
+                        onTap: () {
+                          Navigator.pushNamed(
+                            context,
+                            '/capture',
+                            arguments: {'id': report['id'], 'category': report['category']},
+                          );
+                        },
                       );
                     },
                   );
                 },
               ),
               const SizedBox(height: 20),
-
-              // Recents Section
               Text(
                 "Recent",
                 style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 10),
-              StreamBuilder<List<Map<String, dynamic>>>( 
-                stream: fetchReports('Submitted'), // Fetch "Submitted" reports
+              StreamBuilder<List<Map<String, dynamic>>>(
+                stream: fetchReports('Submitted'),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
@@ -124,6 +118,7 @@ class HistoryPage extends StatelessWidget {
                       return _buildHistoryBox(
                         title: report['label'] ?? 'Other Potential Forms of Violence',
                         description: report['status'] ?? '',
+                        onTap: () {}, // Submitted reports might not be editable
                       );
                     },
                   );
@@ -154,7 +149,7 @@ class HistoryPage extends StatelessWidget {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
-        color: Colors.white, // Bottom navigation bar color changed to white
+        color: Colors.white,
         shape: CircularNotchedRectangle(),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -164,13 +159,13 @@ class HistoryPage extends StatelessWidget {
               IconButton(
                 icon: Icon(
                   Icons.home,
-                  color: ModalRoute.of(context)?.settings.name == '/home' ?  Color(0xFFAD8FC6) : Colors.black,
+                  color: ModalRoute.of(context)?.settings.name == '/home' ? Color(0xFFAD8FC6) : Colors.black,
                 ),
                 onPressed: () {
                   Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
                 },
               ),
-              SizedBox(width: 40), // Space for the SOS button in the center
+              SizedBox(width: 40),
               IconButton(
                 icon: Icon(
                   Icons.person,
@@ -187,48 +182,42 @@ class HistoryPage extends StatelessWidget {
     );
   }
 
-  // Reusable Widget for History Boxes
   Widget _buildHistoryBox({
     required String title,
     required String description,
+    required VoidCallback onTap,
   }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Colors.purple, width: 2),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Removed Image section
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  description,
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ],
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: Colors.purple, width: 2),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 5),
+            Text(
+              description,
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

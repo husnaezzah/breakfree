@@ -221,6 +221,33 @@ class _CapturePageState extends State<CapturePage> {
   void initState() {
     super.initState();
     _tfliteInit();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+      if (args != null && args['id'] != null) {
+        _loadDraft(args['id'], args['category']);
+      }
+    });
+  }
+
+  Future<void> _loadDraft(String id, String category) async {
+    final docSnapshot = await FirebaseFirestore.instance
+        .collection('reports')
+        .doc(category)
+        .collection('drafts')
+        .doc(id)
+        .get();
+
+    if (docSnapshot.exists) {
+      final data = docSnapshot.data()!;
+      setState(() {
+        nameController.text = data['name'] ?? '';
+        phoneNumberController.text = data['phone_number'] ?? '';
+        locationController.text = data['location'] ?? '';
+        descriptionController.text = data['description'] ?? '';
+        label = data['label'] ?? '';
+      });
+    }
   }
 
   void toggleImageFunctionality() {
@@ -313,7 +340,7 @@ class _CapturePageState extends State<CapturePage> {
                       title: Text(
                         'Attach image in the report?',
                         style: GoogleFonts.poppins(
-                          fontSize: 14,
+                          fontSize: 13,
                           fontStyle: FontStyle.italic,
                           color: const Color.fromARGB(255, 96, 32, 109),
                         ),
