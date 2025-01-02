@@ -10,6 +10,7 @@ import 'assistance_page.dart';
 import 'history_page.dart';
 import 'sos_page.dart';
 import 'startup_page.dart';
+import 'forum_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Ensure Flutter is initialized before Firebase
@@ -37,6 +38,7 @@ class MyApp extends StatelessWidget {
         '/assistance': (context) => AssistancePage(), // Assistance page
         '/history': (context) => HistoryPage(), // History page
         '/sos': (context) => SOSPage(), // SOS page
+        '/forum': (context) => ForumPage(), // Forum page
       },
     );
   }
