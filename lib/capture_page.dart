@@ -10,7 +10,9 @@ import 'package:geocoding/geocoding.dart';
 import 'dart:developer' as devtools;
 
 class CapturePage extends StatefulWidget {
-  const CapturePage({super.key});
+  final Map<String, dynamic>? reportData; // Added to handle editing existing reports
+
+  const CapturePage({super.key, this.reportData});
 
   @override
   _CapturePageState createState() => _CapturePageState();
@@ -23,8 +25,16 @@ class _CapturePageState extends State<CapturePage> {
   final ImagePicker _picker = ImagePicker();
   final TextEditingController locationController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
-  final TextEditingController nameController = TextEditingController();
   final TextEditingController phoneNumberController = TextEditingController();
+  String caseNumber = '';
+
+  Future<void> _generateCaseNumber() async {
+    final snapshot = await FirebaseFirestore.instance.collection('reports/drafts/all_cases').get();
+    final nextNumber = snapshot.size + 1;
+    setState(() {
+      caseNumber = 'C${nextNumber.toString().padLeft(2, '0')}';
+    });
+  }
 
   Future<void> _tfliteInit() async {
     await Tflite.loadModel(
@@ -37,35 +47,6 @@ class _CapturePageState extends State<CapturePage> {
   }
 
   Future<void> _getCurrentLocation() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Location services are disabled.', style: GoogleFonts.poppins(color: Colors.red))),
-      );
-      return;
-    }
-
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Location permissions are denied.', style: GoogleFonts.poppins(color: Colors.red))),
-        );
-        return;
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Location permissions are permanently denied.', style: GoogleFonts.poppins(color: Colors.red))),
-      );
-      return;
-    }
-
     try {
       final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
@@ -115,10 +96,11 @@ class _CapturePageState extends State<CapturePage> {
   }
 
   Future<void> saveReport(String status) async {
-    if (nameController.text.isEmpty || phoneNumberController.text.isEmpty || locationController.text.isEmpty) {
+    if (phoneNumberController.text.isEmpty || locationController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Name, Phone Number, and Location are required fields.', style: GoogleFonts.poppins(color: Colors.red)),
+          content: Text('Phone Number and Location are required fields.',
+              style: GoogleFonts.poppins(color: Colors.red)),
           backgroundColor: Colors.white,
           duration: const Duration(seconds: 3),
         ),
@@ -126,50 +108,41 @@ class _CapturePageState extends State<CapturePage> {
       return;
     }
 
+    if (caseNumber.isEmpty) {
+      await _generateCaseNumber();
+    }
+
     try {
       String? imageUrl;
 
-      final String category = isImageEnabled
-          ? (label.contains('physical')
-              ? 'potential_physical_abuse'
-              : label.contains('psychological')
-                  ? 'potential_psychological_abuse'
-                  : 'other_potential_forms_of_violence')
-          : 'other_potential_forms_of_violence';
       final String collection = status == 'In Progress' ? 'drafts' : 'submissions';
 
-      if (filePath != null && isImageEnabled && category != 'other_potential_forms_of_violence') {
+      if (filePath != null && isImageEnabled) {
         final String fileName = DateTime.now().millisecondsSinceEpoch.toString();
         final Reference storageRef = FirebaseStorage.instance.ref().child('images/$fileName');
 
-        // Upload the image file
         final UploadTask uploadTask = storageRef.putFile(filePath!);
 
-        // Wait for the upload to complete and get the download URL
         final TaskSnapshot snapshot = await uploadTask.whenComplete(() {});
         imageUrl = await snapshot.ref.getDownloadURL();
       } else {
-        imageUrl = 'https://example.com/default-image.png'; // Default image if no file is uploaded
+        imageUrl = 'https://example.com/default-image.png';
       }
 
       final reportData = {
-        'name': nameController.text,
+        'case_number': caseNumber,
         'phone_number': phoneNumberController.text,
         'location': locationController.text,
         'description': descriptionController.text,
-        'label': isImageEnabled ? label : 'other_potential_forms_of_violence',
-        'image_url': imageUrl,
         'status': status,
         'timestamp': FieldValue.serverTimestamp(),
       };
 
       await FirebaseFirestore.instance
           .collection('reports')
-          .doc(category)
-          .collection(collection)
+          .doc(collection)
+          .collection('all_cases')
           .add(reportData);
-
-      devtools.log('$status report saved successfully');
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -187,13 +160,12 @@ class _CapturePageState extends State<CapturePage> {
       setState(() {
         filePath = null;
         label = '';
-        nameController.clear();
+        caseNumber = '';
         phoneNumberController.clear();
         locationController.clear();
         descriptionController.clear();
       });
     } catch (e) {
-      devtools.log('Error saving report: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -212,7 +184,6 @@ class _CapturePageState extends State<CapturePage> {
     Tflite.close();
     locationController.dispose();
     descriptionController.dispose();
-    nameController.dispose();
     phoneNumberController.dispose();
     super.dispose();
   }
@@ -220,66 +191,39 @@ class _CapturePageState extends State<CapturePage> {
   @override
   void initState() {
     super.initState();
-    _tfliteInit();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-      if (args != null && args['id'] != null) {
-        _loadDraft(args['id'], args['category']);
-      }
-    });
-  }
-
-  Future<void> _loadDraft(String id, String category) async {
-    final docSnapshot = await FirebaseFirestore.instance
-        .collection('reports')
-        .doc(category)
-        .collection('drafts')
-        .doc(id)
-        .get();
-
-    if (docSnapshot.exists) {
-      final data = docSnapshot.data()!;
-      setState(() {
-        nameController.text = data['name'] ?? '';
-        phoneNumberController.text = data['phone_number'] ?? '';
-        locationController.text = data['location'] ?? '';
-        descriptionController.text = data['description'] ?? '';
-        label = data['label'] ?? '';
-      });
+    if (widget.reportData != null) {
+      final report = widget.reportData!;
+      caseNumber = report['case_number'];
+      phoneNumberController.text = report['phone_number'];
+      locationController.text = report['location'];
+      descriptionController.text = report['description'];
+    } else {
+      _tfliteInit();
+      _generateCaseNumber();
     }
-  }
-
-  void toggleImageFunctionality() {
-    setState(() {
-      isImageEnabled = !isImageEnabled;
-      if (!isImageEnabled) {
-        filePath = null;
-      }
-    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color.fromARGB(255, 251, 247, 247),
+      backgroundColor: const Color.fromARGB(255, 251, 247, 247),
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 96, 32, 109),
         title: Text(
-          'BreakFree. ',
+          'BreakFree.',
           style: GoogleFonts.poppins(
-            fontSize: 24, 
-            fontWeight: FontWeight.bold,
-            color: Color.fromARGB(255, 251, 247, 247)),
-        ), 
-        leading: ModalRoute.of(context)?.settings.name == '/home'
-        ? null 
-        : IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
-          },
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: const Color.fromARGB(255, 251, 247, 247)),
         ),
+        leading: ModalRoute.of(context)?.settings.name == '/home'
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: () {
+                  Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+                },
+              ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -296,11 +240,15 @@ class _CapturePageState extends State<CapturePage> {
                 style: GoogleFonts.poppins(fontSize: 12),
               ),
               const SizedBox(height: 20),
-
+              Text(
+                'Case Number: $caseNumber',
+                style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
               if (isImageEnabled) ...[
                 Container(
-                  width: 280,
-                  height: 210,
+                  width: MediaQuery.of(context).size.width * 0.8,
+                  height: MediaQuery.of(context).size.height * 0.3,
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey),
                     borderRadius: BorderRadius.circular(0),
@@ -314,9 +262,8 @@ class _CapturePageState extends State<CapturePage> {
                       : const Center(child: Text('')),
                 ),
                 const SizedBox(height: 10),
-
                 SizedBox(
-                  width: 200,
+                  width: MediaQuery.of(context).size.width * 0.6,
                   child: ElevatedButton(
                     onPressed: pickImageGallery,
                     style: ElevatedButton.styleFrom(
@@ -332,7 +279,6 @@ class _CapturePageState extends State<CapturePage> {
                 ),
                 const SizedBox(height: 8),
               ],
-
               Row(
                 children: [
                   Expanded(
@@ -347,7 +293,15 @@ class _CapturePageState extends State<CapturePage> {
                       ),
                       value: isImageEnabled,
                       onChanged: (value) {
-                        toggleImageFunctionality();
+                        setState(() {
+                          isImageEnabled = value ?? true;
+                          if (!isImageEnabled) {
+                            filePath = null;
+                            label = 'Other Potential Forms of Violence';
+                          } else {
+                            label = '';
+                          }
+                        });
                       },
                       activeColor: const Color.fromARGB(255, 96, 32, 109),
                       controlAffinity: ListTileControlAffinity.leading,
@@ -355,21 +309,10 @@ class _CapturePageState extends State<CapturePage> {
                   ),
                 ],
               ),
-
               Text(
                 label,
                 style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
               ),
-
-              const SizedBox(height: 10),
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-
               const SizedBox(height: 10),
               TextField(
                 controller: phoneNumberController,
@@ -379,59 +322,75 @@ class _CapturePageState extends State<CapturePage> {
                   border: OutlineInputBorder(),
                 ),
               ),
-
               const SizedBox(height: 10),
-            Row(
-              children: [
-                Flexible(
-                  flex: 1, // Adjust this value to control the width of the icon
-                  child: IconButton(
-                    icon: Icon(Icons.location_on, color: const Color.fromARGB(255, 96, 32, 109),),
-                    onPressed: _getCurrentLocation,
-                  ),
-                ),
-                const SizedBox(width: 5), // Reduce the gap here
-                Expanded(
-                  flex: 6, // Let the TextField take the remaining space
-                  child: TextField(
-                    controller: locationController,
-                    decoration: const InputDecoration(
-                      labelText: 'Location',
-                      border: OutlineInputBorder(),
+              Row(
+                children: [
+                  Flexible(
+                    flex: 1,
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.location_on,
+                        color: Color.fromARGB(255, 96, 32, 109),
+                      ),
+                      onPressed: _getCurrentLocation,
                     ),
                   ),
-                ),
-              ],
-            ),
-
+                  const SizedBox(width: 5),
+                  Expanded(
+                    flex: 6,
+                    child: TextField(
+                      controller: locationController,
+                      decoration: const InputDecoration(
+                        labelText: 'Location',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 10),
-
               TextField(
                 controller: descriptionController,
+                maxLines: 5,
                 decoration: const InputDecoration(
                   labelText: 'Description',
                   border: OutlineInputBorder(),
                 ),
-                maxLines: 5,
               ),
-              const SizedBox(height: 10),
-
+              const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  ElevatedButton(
-                    onPressed: () => saveReport('In Progress'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 96, 32, 109),
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.35,
+                    child: ElevatedButton(
+                      onPressed: () => saveReport('In Progress'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromARGB(255, 96, 32, 109),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                      ),
+                      child: Text(
+                        "Draft",
+                        style: GoogleFonts.poppins(fontSize: 14, color: Colors.white),
+                      ),
                     ),
-                    child: Text('Draft', style: GoogleFonts.poppins(color: Colors.white)),
                   ),
-                  ElevatedButton(
-                    onPressed: () => saveReport('Submitted'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 96, 32, 109),
+                  const SizedBox(width: 20),
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.35,
+                    child: ElevatedButton(
+                      onPressed: () => saveReport('Submitted'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromARGB(255, 96, 32, 109),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                      ),
+                      child: Text(
+                        "Submit",
+                        style: GoogleFonts.poppins(fontSize: 14, color: Colors.white),
+                      ),
                     ),
-                    child: Text('Submit', style: GoogleFonts.poppins(fontSize: 14, color: Colors.white)),
                   ),
                 ],
               ),
@@ -439,7 +398,6 @@ class _CapturePageState extends State<CapturePage> {
           ),
         ),
       ),
-      // Navigation bar addition
       floatingActionButton: SizedBox(
         width: 70,
         height: 70,
@@ -448,7 +406,7 @@ class _CapturePageState extends State<CapturePage> {
             Navigator.pushNamed(context, '/sos');
           },
           backgroundColor: Colors.red,
-          shape: const CircleBorder(),
+          shape: CircleBorder(),
           child: Text(
             'SOS',
             style: GoogleFonts.poppins(
@@ -471,7 +429,7 @@ class _CapturePageState extends State<CapturePage> {
               IconButton(
                 icon: Icon(
                   Icons.home,
-                  color: ModalRoute.of(context)?.settings.name == '/home' ? Color(0xFFAD8FC6) : Colors.black,
+                  color: Colors.black,
                 ),
                 onPressed: () {
                   Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
