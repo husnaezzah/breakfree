@@ -16,8 +16,8 @@ class HomePage extends StatelessWidget {
           child: Text(
             'BreakFree.',
             style: GoogleFonts.poppins(
-              fontSize: 24, 
-              fontWeight: FontWeight.bold, 
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
               color: Color.fromARGB(255, 251, 247, 247),
             ),
           ),
@@ -64,24 +64,10 @@ class HomePage extends StatelessWidget {
                     ),
                     padding: EdgeInsets.all(10),
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.camera_alt,
-                        size: screenWidth * 0.1,
-                        color: Colors.black,
-                      ),
-                      SizedBox(height: 10),
-                      Text(
-                        'Capture',
-                        style: GoogleFonts.roboto(
-                          fontSize: 16,
-                          color: Color.fromARGB(255, 114, 37, 129),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
+                  child: Icon(
+                    Icons.camera_alt,
+                    size: screenWidth * 0.1, // Adjusted icon size
+                    color: Colors.black,
                   ),
                 ),
               ),
@@ -98,22 +84,20 @@ class HomePage extends StatelessWidget {
               ),
               SizedBox(height: screenHeight * 0.02),
 
-              // Row for Q&A, Assistance, and Forum Buttons - Centered and smaller
+              // Row for Q&A, Assistance, and Forum Buttons
               Row(
                 mainAxisAlignment: MainAxisAlignment.center, // Center the buttons
                 children: [
                   _buildOptionButton(
                     context,
-                    Icons.security,
-                    'Q&A',
+                    Icons.library_books, // Replaced icon for Q&A
                     '/qa',
                     screenWidth * 0.25, // Smaller width for buttons
                   ),
                   SizedBox(width: screenWidth * 0.05), // Add spacing between buttons
                   _buildOptionButton(
                     context,
-                    Icons.medical_services,
-                    'Assistance',
+                    Icons.map,
                     '/assistance', // Make sure to use '/assistance' route
                     screenWidth * 0.25, // Smaller width for buttons
                   ),
@@ -121,7 +105,6 @@ class HomePage extends StatelessWidget {
                   _buildOptionButton(
                     context,
                     Icons.forum,
-                    'Forum',
                     '/forum', // Redirects to the Forum page
                     screenWidth * 0.25, // Smaller width for buttons
                   ),
@@ -183,7 +166,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildOptionButton(BuildContext context, IconData icon, String label, String route, double buttonWidth) {
+  Widget _buildOptionButton(BuildContext context, IconData icon, String route, double buttonWidth) {
     return Container(
       width: buttonWidth, // Use the passed width for smaller buttons
       height: buttonWidth, // Keep the height proportionate
@@ -191,10 +174,6 @@ class HomePage extends StatelessWidget {
         onPressed: () {
           if (route == '/qa') {
             Navigator.push(context, MaterialPageRoute(builder: (context) => QAPage()));
-          } else if (route == '/assistance') {
-            Navigator.pushNamed(context, '/assistance');
-          } else if (route == '/forum') {
-            Navigator.pushNamed(context, '/forum'); // Navigating to the Forum page
           } else {
             Navigator.pushNamed(context, route);
           }
@@ -207,24 +186,10 @@ class HomePage extends StatelessWidget {
           ),
           padding: EdgeInsets.all(10),
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: buttonWidth * 0.3, // Adjust the icon size for smaller buttons
-              color: Colors.black,
-            ),
-            SizedBox(height: 10),
-            Text(
-              label,
-              style: GoogleFonts.roboto(
-                fontSize: 14, // Smaller font size for the labels
-                color: Color.fromARGB(255, 96, 32, 109),
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
+        child: Icon(
+          icon,
+          size: buttonWidth * 0.3, // Adjusted icon size for buttons
+          color: Colors.black,
         ),
       ),
     );

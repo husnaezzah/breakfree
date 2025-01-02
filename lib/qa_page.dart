@@ -99,10 +99,10 @@ class _QAPageState extends State<QAPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "BreakFree Chatbot",
+          "BreakFree",
           style: GoogleFonts.poppins(
             color: Color.fromARGB(255, 251, 247, 247),
-            fontSize: 22,
+            fontSize: 24,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -116,8 +116,23 @@ class _QAPageState extends State<QAPage> {
         ),
         backgroundColor: const Color.fromARGB(255, 96, 32, 109),
       ),
-      body: Column(
+            body: Column(
         children: [
+          // Default message to guide users
+          Padding(
+            padding: const EdgeInsets.all(10.0),
+            child: Center(  // Center the text horizontally
+              child: Text(
+                'Ask questions to learn about domestic violence, recognize signs, and find support resources available to you.',
+                textAlign: TextAlign.center,  // Use textAlign here directly
+                style: GoogleFonts.poppins(
+                  fontSize: screenWidth * 0.035,  // Adjusted font size to make it smaller
+                  fontStyle: FontStyle.italic,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ),
+          ),
           Expanded(
             child: ListView.builder(
               itemCount: _messages.length,

@@ -113,6 +113,7 @@ class _CapturePageState extends State<CapturePage> {
     }
 
     try {
+      // ignore: unused_local_variable
       String? imageUrl;
 
       final String collection = status == 'In Progress' ? 'drafts' : 'submissions';
