@@ -192,7 +192,7 @@ class ForumPage extends StatelessWidget {
   }
 }
 
-class DiscussionCard extends StatelessWidget {
+class DiscussionCard extends StatefulWidget {
   final String forumId;
   final String title;
   final String description;
@@ -204,13 +204,65 @@ class DiscussionCard extends StatelessWidget {
   });
 
   @override
+  _DiscussionCardState createState() => _DiscussionCardState();
+}
+
+class _DiscussionCardState extends State<DiscussionCard> {
+  bool isLiked = false;
+  int likeCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchLikeStatus();
+  }
+
+  void _fetchLikeStatus() async {
+    final doc = await FirebaseFirestore.instance.collection('forums').doc(widget.forumId).get();
+    if (doc.exists) {
+      final data = doc.data()!;
+      setState(() {
+        likeCount = data['likes'] ?? 0;
+        // Assuming you track user IDs for likes:
+        // isLiked = (data['likedBy'] as List).contains(currentUserId);
+      });
+    }
+  }
+
+  void _toggleLike() async {
+    final docRef = FirebaseFirestore.instance.collection('forums').doc(widget.forumId);
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final snapshot = await transaction.get(docRef);
+      if (!snapshot.exists) return;
+
+      final data = snapshot.data()!;
+      final currentLikes = data['likes'] ?? 0;
+
+      if (isLiked) {
+        // Unlike
+        transaction.update(docRef, {'likes': currentLikes - 1});
+        // Remove user ID from likedBy if needed
+      } else {
+        // Like
+        transaction.update(docRef, {'likes': currentLikes + 1});
+        // Add user ID to likedBy if needed
+      }
+    });
+
+    setState(() {
+      isLiked = !isLiked;
+      likeCount += isLiked ? 1 : -1;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => DiscussionPage(forumId: forumId),
+            builder: (context) => DiscussionPage(forumId: widget.forumId),
           ),
         );
       },
@@ -226,7 +278,7 @@ class DiscussionCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              title,
+              widget.title,
               style: GoogleFonts.poppins(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
@@ -235,11 +287,43 @@ class DiscussionCard extends StatelessWidget {
             ),
             SizedBox(height: 5),
             Text(
-              description,
+              widget.description,
               style: GoogleFonts.poppins(
                 fontSize: 10,
                 color: Colors.grey[600],
               ),
+            ),
+            SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        isLiked ? Icons.favorite : Icons.favorite_border,
+                        color: Colors.red,
+                      ),
+                      onPressed: _toggleLike,
+                    ),
+                    Text('$likeCount'),
+                  ],
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => DiscussionPage(forumId: widget.forumId),
+                      ),
+                    );
+                  },
+                  child: Text(
+                    "View Discussion",
+                    style: GoogleFonts.poppins(color: Colors.purple),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
