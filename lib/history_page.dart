@@ -5,22 +5,22 @@ import 'package:google_fonts/google_fonts.dart';
 class HistoryPage extends StatelessWidget {
   const HistoryPage({Key? key}) : super(key: key);
 
+  // Fetch reports based on their status (In Progress or Submitted)
   Stream<List<Map<String, dynamic>>> fetchReports(String status) async* {
-    final categories = ['potential_physical_abuse', 'potential_psychological_abuse', 'other_potential_forms_of_violence'];
+    final categories = ['drafts', 'submissions']; // Adjusted for drafts and submissions
     List<Map<String, dynamic>> reports = [];
 
     for (String category in categories) {
       final QuerySnapshot snapshot = await FirebaseFirestore.instance
-          .collection('reports')
-          .doc(category)
-          .collection(status == 'In Progress' ? 'drafts' : 'submissions')
+          .collection('reports') // Root collection
+          .doc(category) // Reference to 'drafts' or 'submissions'
+          .collection('all_cases') // Subcollection for case reports
           .get();
 
       for (var doc in snapshot.docs) {
         reports.add({
           ...doc.data() as Map<String, dynamic>,
           'id': doc.id, // Include document ID
-          'category': category, // Include category for navigation
         });
       }
     }
@@ -57,6 +57,7 @@ class HistoryPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Draft Section
               Text(
                 "Draft",
                 style: GoogleFonts.poppins(
@@ -65,8 +66,8 @@ class HistoryPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
-              StreamBuilder<List<Map<String, dynamic>>>(
-                stream: fetchReports('In Progress'),
+              StreamBuilder<List<Map<String, dynamic>>>(  // Fetch drafts here
+                stream: fetchReports('drafts'),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
@@ -74,18 +75,18 @@ class HistoryPage extends StatelessWidget {
                   final inProgressReports = snapshot.data ?? [];
                   return ListView.builder(
                     shrinkWrap: true,
-                    physics: const AlwaysScrollableScrollPhysics(),
+                    physics: const NeverScrollableScrollPhysics(),
                     itemCount: inProgressReports.length,
                     itemBuilder: (context, index) {
                       final report = inProgressReports[index];
                       return _buildHistoryBox(
-                        title: report['label'] ?? 'Other Potential Forms of Violence',
-                        description: report['status'] ?? '',
+                        caseNumber: report['case_number'] ?? 'Unknown Case Number', // Display case number
+                        description: 'In Progress', // Display status
                         onTap: () {
                           Navigator.pushNamed(
                             context,
                             '/capture',
-                            arguments: {'id': report['id'], 'category': report['category']},
+                            arguments: {'id': report['id']}, // Pass report data
                           );
                         },
                       );
@@ -94,6 +95,7 @@ class HistoryPage extends StatelessWidget {
                 },
               ),
               const SizedBox(height: 20),
+              // Recent Section
               Text(
                 "Recent",
                 style: GoogleFonts.poppins(
@@ -102,8 +104,8 @@ class HistoryPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
-              StreamBuilder<List<Map<String, dynamic>>>(
-                stream: fetchReports('Submitted'),
+              StreamBuilder<List<Map<String, dynamic>>>(  // Fetch submitted reports
+                stream: fetchReports('submissions'),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
@@ -111,14 +113,14 @@ class HistoryPage extends StatelessWidget {
                   final recentReports = snapshot.data ?? [];
                   return ListView.builder(
                     shrinkWrap: true,
-                    physics: const AlwaysScrollableScrollPhysics(),
+                    physics: const NeverScrollableScrollPhysics(),
                     itemCount: recentReports.length,
                     itemBuilder: (context, index) {
                       final report = recentReports[index];
                       return _buildHistoryBox(
-                        title: report['label'] ?? 'Other Potential Forms of Violence',
-                        description: report['status'] ?? '',
-                        onTap: () {}, // Submitted reports might not be editable
+                        caseNumber: report['case_number'] ?? 'Unknown Case Number', // Display case number
+                        description: 'Submitted', // Display status
+                        onTap: () {}, // No action for submitted reports
                       );
                     },
                   );
@@ -182,8 +184,9 @@ class HistoryPage extends StatelessWidget {
     );
   }
 
+  // Reusable widget for displaying reports
   Widget _buildHistoryBox({
-    required String title,
+    required String caseNumber,
     required String description,
     required VoidCallback onTap,
   }) {
@@ -201,7 +204,7 @@ class HistoryPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              title,
+              "Case Number: $caseNumber",
               style: GoogleFonts.poppins(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,

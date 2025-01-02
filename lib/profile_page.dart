@@ -101,28 +101,18 @@ class ProfilePage extends StatelessWidget {
 
                   // Health Button
                   _buildProfileButton(
-                    Icons.favorite_outline,
-                    'Health',
+                    Icons.medical_information_outlined,
+                    'Details',
                     textStyle,
                     () {
                       _showHealthDialog(context);
-                    },
-                  ),
-
-                  // Settings Button
-                  _buildProfileButton(
-                    Icons.settings_outlined,
-                    'Settings',
-                    textStyle,
-                    () {
-                      _toggleSoundSettings(context);
                     },
                   ),
                 ],
               ),
               SizedBox(height: 20),
               Text(
-                'Information',
+                'Helpline Resources',
                 style: GoogleFonts.poppins(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
