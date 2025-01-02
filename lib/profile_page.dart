@@ -22,26 +22,6 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  void _toggleSoundSettings(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Settings'),
-          content: Text('Sound settings toggled (Mute/Unmute).'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     // Define the consistent TextStyle
