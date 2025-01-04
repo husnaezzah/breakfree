@@ -144,17 +144,26 @@ class ForumPage extends StatelessWidget {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Create New Thread'),
+             title: Center(
+            child: Text(
+              'Create New Thread',
+              style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: titleController,
-                decoration: InputDecoration(labelText: 'Title'),
+                decoration: InputDecoration(
+                  labelText: 'Title',
+                  labelStyle: GoogleFonts.poppins(fontSize: 14, color: Colors.black, fontWeight: FontWeight.bold)),
               ),
               TextField(
                 controller: descriptionController,
-                decoration: InputDecoration(labelText: 'Description'),
+                decoration: InputDecoration(
+                  labelText: 'Description',
+                  labelStyle: GoogleFonts.poppins(fontSize: 14, color: Colors.black, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -163,20 +172,25 @@ class ForumPage extends StatelessWidget {
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: Text('Cancel'),
-            ),
+              child: Text('Cancel',
+              style: GoogleFonts.poppins(fontSize: 14, color: const Color.fromARGB(255, 96, 32, 109))),),
             TextButton(
-              onPressed: () {
-                final title = titleController.text.trim();
-                final description = descriptionController.text.trim();
-                if (title.isNotEmpty && description.isNotEmpty) {
-                  _createForumThread(title, description);
-                  Navigator.pop(context);
-                }
-              },
-              child: Text('Create'),
+          onPressed: () {
+            final title = titleController.text.trim();
+            final description = descriptionController.text.trim();
+            if (title.isNotEmpty && description.isNotEmpty) {
+              _createForumThread(title, description);
+              Navigator.pop(context);
+            }
+          },
+            style: TextButton.styleFrom(
+              backgroundColor: const Color.fromARGB(255, 96, 32, 109), // Set your desired text color
             ),
-          ],
+              child: Text('Create',
+              style: GoogleFonts.poppins(fontSize: 14, color: Colors.white),
+            ),
+            ),
+          ]
         );
       },
     );

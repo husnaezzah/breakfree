@@ -97,9 +97,10 @@ class _QAPageState extends State<QAPage> {
     final double screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
+      backgroundColor: Color.fromARGB(255, 251, 247, 247),
       appBar: AppBar(
         title: Text(
-          "BreakFree",
+          "BreakFree.",
           style: GoogleFonts.poppins(
             color: Color.fromARGB(255, 251, 247, 247),
             fontSize: 24,
@@ -185,9 +186,10 @@ class _QAPageState extends State<QAPage> {
                   child: TextField(
                     controller: _controller,
                     decoration: InputDecoration(
+                      contentPadding: EdgeInsetsDirectional.symmetric(vertical: 8.0, horizontal: 16),
                       hintText: "Ask a question...",
                       hintStyle: GoogleFonts.poppins(
-                        fontSize: screenWidth * 0.04,
+                        fontSize: screenWidth * 0.035,
                         color: Colors.grey[500],
                       ),
                       border: OutlineInputBorder(

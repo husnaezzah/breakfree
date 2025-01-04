@@ -90,21 +90,32 @@ class HomePage extends StatelessWidget {
                 children: [
                   _buildOptionButton(
                     context,
-                    Icons.library_books, // Replaced icon for Q&A
+                    Image.asset(
+                      'assets/chatbot.png', // Use your custom image here
+                      width: screenWidth * 0.1, // Adjusted size of the image
+                      height: screenWidth * 0.1, // Adjusted size of the image
+                      fit: BoxFit.cover, // Ensure image covers the area properly
+                    ),
                     '/qa',
                     screenWidth * 0.25, // Smaller width for buttons
                   ),
                   SizedBox(width: screenWidth * 0.05), // Add spacing between buttons
                   _buildOptionButton(
                     context,
-                    Icons.map,
+                    Icon(
+                      Icons.map,
+                      color: Colors.black, // Set map icon color to black
+                    ),
                     '/assistance', // Make sure to use '/assistance' route
                     screenWidth * 0.25, // Smaller width for buttons
                   ),
                   SizedBox(width: screenWidth * 0.05), // Add spacing between buttons
                   _buildOptionButton(
                     context,
-                    Icons.forum,
+                    Icon(
+                      Icons.forum,
+                      color: Colors.black, // Set forum icon color to black
+                    ),
                     '/forum', // Redirects to the Forum page
                     screenWidth * 0.25, // Smaller width for buttons
                   ),
@@ -166,7 +177,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildOptionButton(BuildContext context, IconData icon, String route, double buttonWidth) {
+  Widget _buildOptionButton(BuildContext context, Widget iconOrImage, String route, double buttonWidth) {
     return Container(
       width: buttonWidth, // Use the passed width for smaller buttons
       height: buttonWidth, // Keep the height proportionate
@@ -186,11 +197,7 @@ class HomePage extends StatelessWidget {
           ),
           padding: EdgeInsets.all(10),
         ),
-        child: Icon(
-          icon,
-          size: buttonWidth * 0.3, // Adjusted icon size for buttons
-          color: Colors.black,
-        ),
+        child: Center(child: iconOrImage),
       ),
     );
   }

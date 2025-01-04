@@ -13,6 +13,7 @@ class DiscussionPage extends StatelessWidget {
     final TextEditingController commentController = TextEditingController();
 
     return Scaffold(
+      backgroundColor: Color.fromARGB(255, 251, 247, 247), 
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 96, 32, 109),
         title: Text(
