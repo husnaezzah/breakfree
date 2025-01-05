@@ -58,8 +58,9 @@ class _DiscussionPageState extends State<DiscussionPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+
       appBar: AppBar(
-        backgroundColor: const Color.fromARGB(255, 96, 32, 109),
+        backgroundColor: const Color.fromARGB(255, 251, 247, 247),
         title: Text(
           'BreakFree.',
           style: GoogleFonts.poppins(
