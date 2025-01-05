@@ -11,8 +11,9 @@ import 'dart:developer' as devtools;
 
 class CapturePage extends StatefulWidget {
   final Map<String, dynamic>? reportData; // Added to handle editing existing reports
+  final String? caseId;
 
-  const CapturePage({super.key, this.reportData});
+  const CapturePage({super.key, this.reportData, this.caseId});
 
   @override
   _CapturePageState createState() => _CapturePageState();
@@ -28,13 +29,18 @@ class _CapturePageState extends State<CapturePage> {
   final TextEditingController phoneNumberController = TextEditingController();
   String caseNumber = '';
   String? phoneValidationMessage;
+  bool isMounted = true; 
 
-  Future<void> _generateCaseNumber() async {
-    final snapshot = await FirebaseFirestore.instance.collection('reports/drafts/all_cases').get();
+    Future<void> _generateCaseNumber() async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('reports/drafts/all_cases')
+        .get();
     final nextNumber = snapshot.size + 1;
-    setState(() {
-      caseNumber = 'C${nextNumber.toString().padLeft(2, '0')}';
-    });
+    if (isMounted) {
+      setState(() {
+        caseNumber = 'C${nextNumber.toString().padLeft(2, '0')}';
+      });
+    }
   }
 
   Future<void> _tfliteInit() async {
@@ -96,15 +102,13 @@ class _CapturePageState extends State<CapturePage> {
     }
   }
 
-  // Phone number validation
+   // Validate phone number (+60 followed by 8 or 9 digits)
   void validatePhoneNumber(String phoneNumber) {
-    if (phoneNumber.isEmpty) {
+    final phonePattern = RegExp(r'^\d{8,9}$');
+    if (!phonePattern.hasMatch(phoneNumber)) {
       setState(() {
-        phoneValidationMessage = 'Phone number is required.';
-      });
-    } else if (!phoneNumber.startsWith('+60') || phoneNumber.length < 13 || phoneNumber.length > 14) {
-      setState(() {
-        phoneValidationMessage = 'Invalid phone number format. Please use +60 followed by your number.';
+        phoneValidationMessage =
+            'Invalid phone number format.';
       });
     } else {
       setState(() {
@@ -114,27 +118,25 @@ class _CapturePageState extends State<CapturePage> {
   }
 
   Future<void> saveReport(String status) async {
-    if (phoneValidationMessage != null) {
+    // Ensure phone number is valid before saving
+    if (phoneValidationMessage != null || phoneNumberController.text.isEmpty ) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            phoneValidationMessage!,
+            phoneValidationMessage ?? 'Phone number is required.',
             style: GoogleFonts.poppins(color: Colors.red),
           ),
           backgroundColor: Colors.white,
-          duration: const Duration(seconds: 3),
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         ),
       );
       return;
     }
 
     if (status == 'Submitted' &&
-        (phoneNumberController.text.isEmpty || locationController.text.isEmpty)) {
+        (phoneNumberController.text.isEmpty || locationController.text.isEmpty || descriptionController.text.isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Phone Number and Location are required fields.',
+          content: Text('Phone Number, Location and Description are required fields.',
               style: GoogleFonts.poppins(color: Colors.red)),
           backgroundColor: Colors.white,
           duration: const Duration(seconds: 3),
@@ -168,18 +170,30 @@ class _CapturePageState extends State<CapturePage> {
 
       final reportData = {
         'case_number': caseNumber,
-        'phone_number': phoneNumberController.text,
+        'phone_number': '+60 ${phoneNumberController.text}',
         'location': locationController.text,
         'description': descriptionController.text,
         'status': status,
         'timestamp': FieldValue.serverTimestamp(),
+        'image_url': imageUrl,
       };
 
-      await FirebaseFirestore.instance
-          .collection('reports')
-          .doc(collection)
-          .collection('all_cases')
-          .add(reportData);
+      if (widget.caseId != null) {
+        // Update existing report
+        await FirebaseFirestore.instance
+            .collection('reports')
+            .doc(collection)
+            .collection('all_cases')
+            .doc(widget.caseId)
+            .set(reportData);
+      } else {
+        // Create new report
+        await FirebaseFirestore.instance
+            .collection('reports')
+            .doc(collection)
+            .collection('all_cases')
+            .add(reportData);
+      }
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -220,6 +234,7 @@ class _CapturePageState extends State<CapturePage> {
 
   @override
   void dispose() {
+    isMounted = false;
     Tflite.close();
     locationController.dispose();
     descriptionController.dispose();
@@ -361,13 +376,13 @@ class _CapturePageState extends State<CapturePage> {
                   decoration: InputDecoration(
                     labelText: 'Phone Number',
                     labelStyle: GoogleFonts.poppins(fontSize: 18, color: Colors.black),
+                    prefixText: '+60 ',
                     floatingLabelBehavior: FloatingLabelBehavior.always,
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
-                    prefixText: '+60 ',
                     errorText: phoneValidationMessage,
                   ),
                   onChanged: (value) {
-                    if (value.startsWith('+60') && value.length > 3 && (value.length == 13 || value.length == 14)) {
+                     {
                       validatePhoneNumber(value);
                     }
                   },
@@ -455,6 +470,54 @@ class _CapturePageState extends State<CapturePage> {
                     ),
                   ),
                 ],
+              ),
+            ],
+          ),
+        ),
+      ),
+      floatingActionButton: SizedBox(
+        width: 70,
+        height: 70,
+        child: FloatingActionButton(
+          onPressed: () {
+            Navigator.pushNamed(context, '/sos');
+          },
+          backgroundColor: Colors.red,
+          shape: CircleBorder(),
+          child: Text(
+            'SOS',
+            style: GoogleFonts.poppins(
+              fontSize: 20,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: BottomAppBar(
+        color: Colors.white, // Bottom navigation bar color changed to white
+        shape: CircularNotchedRectangle(),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                icon: Icon(Icons.home, color: Colors.black),
+                onPressed: () {
+                  Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+                },
+              ),
+              SizedBox(width: 40), // Space for the SOS button in the center
+              IconButton(
+                icon: Icon(
+                  Icons.person,
+                  color: ModalRoute.of(context)?.settings.name == '/profile' ? Color(0xFFAD8FC6) : Colors.black,
+                ),
+                onPressed: () {
+                  Navigator.pushNamed(context, '/profile');
+                },
               ),
             ],
           ),
