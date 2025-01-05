@@ -198,7 +198,7 @@ class HistoryPage extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: Colors.purple, width: 2),
+          border: Border.all(color: const Color.fromARGB(255, 96, 32, 109), width: 2),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

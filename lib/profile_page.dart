@@ -1,40 +1,168 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-class ProfilePage extends StatelessWidget {
-  void _showHealthDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Health Details'),
-          content: Text('Here, users can add weight, height, and health-related data.'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
+class ProfilePage extends StatefulWidget {
+  @override
+  _ProfilePageState createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  final _formKey = GlobalKey<FormState>();
+  final _firestore = FirebaseFirestore.instance;
+
+  String _anonName = "Penguin";
+  String? _gender;
+  String? _ageRange;
+  String? _contactMethod;
+
+  Future<void> _saveDetails() async {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+
+      await _firestore.collection('profile').doc('userDetails').set({
+        'anon_name': _anonName,
+        'gender': _gender,
+        'age_range': _ageRange,
+        'contact_method': _contactMethod,
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Details saved successfully!')),
+      );
+    }
   }
 
-  void _toggleSoundSettings(BuildContext context) {
+  Future<void> _showHealthDialog(BuildContext context) async {
+    final docSnapshot = await _firestore.collection('profile').doc('userDetails').get();
+    if (docSnapshot.exists) {
+      final data = docSnapshot.data()!;
+      _anonName = data['anon_name'] ?? "Penguin";
+      _gender = data['gender'];
+      _ageRange = data['age_range'];
+      _contactMethod = data['contact_method'];
+    }
+
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Settings'),
-          content: Text('Sound settings toggled (Mute/Unmute).'),
+         title: Center(
+            child: Text(
+              'Personal Details',
+              style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ),
+          content: SingleChildScrollView(
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                TextFormField(
+                  initialValue: _anonName,
+                  decoration: InputDecoration(
+                    labelText: 'Anonymous Name',
+                    labelStyle: GoogleFonts.poppins(fontSize: 18, color: Colors.black, fontWeight: FontWeight.bold),
+                  ),
+                  readOnly: true,
+                  style: GoogleFonts.poppins(fontSize: 13, color: Colors.black),
+                ),
+                DropdownButtonFormField<String>(
+                  value: _gender,
+                  items: ['Male', 'Female']
+                      .map((gender) => DropdownMenuItem(
+                            value: gender,
+                            child: Text(
+                              gender,
+                              style: GoogleFonts.poppins(fontSize: 13, color: Colors.black),
+                            ),
+                          ))
+                      .toList(),
+                  decoration: InputDecoration(
+                    labelText: 'Gender',
+                    labelStyle: GoogleFonts.poppins(fontSize: 18, color: Colors.black, fontWeight: FontWeight.bold),
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      _gender = value;
+                    });
+                  },
+                  validator: (value) =>
+                      value == null ? 'Please select a gender' : null,
+                  style: GoogleFonts.poppins(fontSize: 16), // Optional: Applies to the selected value
+                ),
+                DropdownButtonFormField<String>(
+                  value: _ageRange,
+                  items: ['13-19', '20-29', '30-39', '40-49', '50-59', '60-69']
+                      .map((range) => DropdownMenuItem(
+                            value: range,
+                            child: Text(
+                              range,
+                              style: GoogleFonts.poppins(fontSize: 13, color: Colors.black),
+                            ),
+                          ))
+                      .toList(),
+                  decoration: InputDecoration(
+                    labelText: 'Age Range',
+                    labelStyle: GoogleFonts.poppins(fontSize: 18, color: Colors.black, fontWeight: FontWeight.bold),
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      _ageRange = value;
+                    });
+                  },
+                  validator: (value) =>
+                      value == null ? 'Please select an age range' : null,
+                  style: GoogleFonts.poppins(fontSize: 14), // Optional
+                ),
+                DropdownButtonFormField<String>(
+                  value: _contactMethod,
+                  items: ['Text', 'Call']
+                      .map((method) => DropdownMenuItem(
+                            value: method,
+                            child: Text(
+                              method,
+                              style: GoogleFonts.poppins(fontSize: 13, color: Colors.black),
+                            ),
+                          ))
+                      .toList(),
+                  decoration: InputDecoration(
+                    labelText: 'Contact Method',
+                    labelStyle: GoogleFonts.poppins(fontSize: 18, color: Colors.black, fontWeight: FontWeight.bold),
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      _contactMethod = value;
+                    });
+                  },
+                  validator: (value) =>
+                      value == null ? 'Please select a contact method' : null,
+                  style: GoogleFonts.poppins(fontSize: 16), // Optional
+                ),
+
+                ],
+              ),
+            ),
+          ),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: Text('OK'),
+              child: Text('Cancel',
+              style: GoogleFonts.poppins(fontSize: 14, color: const Color.fromARGB(255, 96, 32, 109))),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                await _saveDetails();
+                Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color.fromARGB(255, 96, 32, 109),
+              ),
+              child: Text('Save',
+              style: GoogleFonts.poppins(fontSize: 14, color: Colors.white))
             ),
           ],
         );
@@ -44,7 +172,6 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Define the consistent TextStyle
     final textStyle = GoogleFonts.roboto(
       fontSize: 16,
       color: Color.fromARGB(255, 114, 37, 129),
@@ -89,7 +216,6 @@ class ProfilePage extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  // History Button
                   _buildProfileButton(
                     Icons.history,
                     'History',
@@ -98,8 +224,6 @@ class ProfilePage extends StatelessWidget {
                       Navigator.pushNamed(context, '/history');
                     },
                   ),
-
-                  // Health Button
                   _buildProfileButton(
                     Icons.medical_information_outlined,
                     'Details',
@@ -119,7 +243,6 @@ class ProfilePage extends StatelessWidget {
                 ),
               ),
               SizedBox(height: 10),
-              // Information Cards
               InformationCard(
                 title: 'Talian Kasih 15999',
                 description:
@@ -168,7 +291,7 @@ class ProfilePage extends StatelessWidget {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
-        color: Colors.white, // Bottom navigation bar color
+        color: Colors.white,
         shape: CircularNotchedRectangle(),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -184,11 +307,12 @@ class ProfilePage extends StatelessWidget {
                   Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
                 },
               ),
-              SizedBox(width: 40), // Space for the SOS button in the center
+              SizedBox(width: 40),
               IconButton(
                 icon: Icon(
                   Icons.person,
-                  color: Color.fromARGB(255, 114, 37, 129)),
+                  color: Color.fromARGB(255, 114, 37, 129),
+                ),
                 onPressed: () {
                   Navigator.pushNamed(context, '/profile');
                 },

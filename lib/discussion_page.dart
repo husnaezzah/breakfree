@@ -58,7 +58,6 @@ class _DiscussionPageState extends State<DiscussionPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color.fromARGB(255, 251, 247, 247),
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 96, 32, 109),
         title: Text(

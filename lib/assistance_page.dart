@@ -260,6 +260,7 @@ class _AssistancePageState extends State<AssistancePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color.fromARGB(255, 251, 247, 247), 
       appBar: AppBar(
         title: Text(
           "BreakFree.",
@@ -288,7 +289,8 @@ class _AssistancePageState extends State<AssistancePage> {
               height: 250,
               width: double.infinity,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10)
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(10),
@@ -413,37 +415,46 @@ class SupportPointCard extends StatelessWidget {
     required this.description, 
   }) : super(key: key);
 
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15),
+@override
+Widget build(BuildContext context) {
+  return Card(
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(15),
+      side: BorderSide(
+        color: const Color.fromARGB(255, 96, 32, 109), // Outline color for the card
+        width: 2, // Adjust the border width as needed
       ),
-      child: ListTile(
-        leading: Icon(
-          icon,
-          size: 40,
-          color: const Color.fromARGB(255, 96, 32, 109),
-        ),
-        title: Text(
-          title,
-          style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        subtitle: Text(description),
-        trailing: ElevatedButton(
-          onPressed: onViewPressed,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color.fromARGB(255, 96, 32, 109),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+    ),
+    color: Color.fromARGB(255, 251, 247, 247),
+    child: ListTile(
+      leading: Icon(
+        icon,
+        size: 40,
+        color: const Color.fromARGB(255, 96, 32, 109),
+      ),
+      title: Text(
+        title,
+        style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
+      ),
+      subtitle: Text(description),
+      trailing: ElevatedButton(
+        onPressed: onViewPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color.fromARGB(255, 96, 32, 109),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+            side: BorderSide(
+              color: Colors.white, // White border for the button
+              width: 2, // Adjust the border width as needed
             ),
           ),
-          child: const Text(
-            'View',
-            style: TextStyle(color: Colors.white),
-          ),
+        ),
+        child: const Text(
+          'View',
+          style: TextStyle(color: Colors.white),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
