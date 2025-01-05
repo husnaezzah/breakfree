@@ -12,7 +12,10 @@ class _QAPageState extends State<QAPage> {
 
   // Simulate bot responses based on simple keywords or questions
   void _getBotResponse(String message) {
-    if (message.toLowerCase().contains("hello") || message.toLowerCase().contains("hi")) {
+    // Check if "hit" is mentioned first
+    if (RegExp(r'\b(hit)\b', caseSensitive: false).hasMatch(message)) {
+      _addTextResponse("No one should ever hit you. If you're in immediate danger, please activate the SOS button or contact emergency services.");
+    } else if (message.toLowerCase().contains("hello") || message.toLowerCase().contains("hi")) {
       _addTextResponse("Hello! How can I assist you today?");
     } else if (message.toLowerCase().contains("domestic") || message.toLowerCase().contains("violence")) {
       setState(() {
@@ -55,6 +58,14 @@ class _QAPageState extends State<QAPage> {
       _addTextResponse("Our app provides local resources including nearby shelters, hospitals, and hotlines. You can find help close by anytime.");
     } else if (message.toLowerCase().contains("emergency")) {
       _addTextResponse("Activate SOS button now!");
+    } else if (message.toLowerCase().contains("hurt")) {
+      _addTextResponse("I'm sorry you're feeling hurt. If you're in danger, please use the SOS button for help or contact a trusted person or hotline.");
+    } else if (message.toLowerCase().contains("confidentiality")) {
+      _addTextResponse("Your privacy and safety are our top priorities. We offer data security to keep your information secure.");
+    } else if (message.toLowerCase().contains("trauma")) {
+      _addTextResponse("Our app is designed to be sensitive to trauma, avoiding potentially triggering content while offering support resources.");
+    } else if (message.toLowerCase().contains("stigma")) {
+      _addTextResponse("We understand the fear of stigma. Our app offers anonymous support, so you can access help privately and securely.");
     } else if (message.toLowerCase().contains("help")) {
       setState(() {
         _messages.add({
@@ -66,16 +77,11 @@ class _QAPageState extends State<QAPage> {
         });
         _addTextResponse("OR Press the SOS button.");
       });
-    } else if (message.toLowerCase().contains("confidentiality")) {
-      _addTextResponse("Your privacy and safety are our top priorities. We offer data security to keep your information secure.");
-    } else if (message.toLowerCase().contains("trauma")) {
-      _addTextResponse("Our app is designed to be sensitive to trauma, avoiding potentially triggering content while offering support resources.");
-    } else if (message.toLowerCase().contains("stigma")) {
-      _addTextResponse("We understand the fear of stigma. Our app offers anonymous support, so you can access help privately and securely.");
     } else {
       _addTextResponse("I'm here to help, but I didn't quite understand that. Could you please rephrase?");
     }
   }
+
 
   // Helper method to add a text response to the messages
   void _addTextResponse(String response) {
