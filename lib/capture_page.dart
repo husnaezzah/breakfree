@@ -27,6 +27,7 @@ class _CapturePageState extends State<CapturePage> {
   final TextEditingController descriptionController = TextEditingController();
   final TextEditingController phoneNumberController = TextEditingController();
   String caseNumber = '';
+  String? phoneValidationMessage;
 
   Future<void> _generateCaseNumber() async {
     final snapshot = await FirebaseFirestore.instance.collection('reports/drafts/all_cases').get();
@@ -95,16 +96,40 @@ class _CapturePageState extends State<CapturePage> {
     }
   }
 
-  String? validatePhoneNumber(String phoneNumber) {
-    if (!RegExp(
-            r'^(\+60[1-9]\d{8,9}|\+62\d{9,12}|\+66\d{9}|\+65\d{8}|\+63\d{10})$')
-        .hasMatch(phoneNumber)) {
-      return 'Invalid phone number format';
+  // Phone number validation
+  void validatePhoneNumber(String phoneNumber) {
+    if (phoneNumber.isEmpty) {
+      setState(() {
+        phoneValidationMessage = 'Phone number is required.';
+      });
+    } else if (!phoneNumber.startsWith('+60') || phoneNumber.length < 13 || phoneNumber.length > 14) {
+      setState(() {
+        phoneValidationMessage = 'Invalid phone number format. Please use +60 followed by your number.';
+      });
+    } else {
+      setState(() {
+        phoneValidationMessage = null;
+      });
     }
-    return null;
   }
 
   Future<void> saveReport(String status) async {
+    if (phoneValidationMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            phoneValidationMessage!,
+            style: GoogleFonts.poppins(color: Colors.red),
+          ),
+          backgroundColor: Colors.white,
+          duration: const Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        ),
+      );
+      return;
+    }
+
     if (status == 'Submitted' &&
         (phoneNumberController.text.isEmpty || locationController.text.isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -113,6 +138,8 @@ class _CapturePageState extends State<CapturePage> {
               style: GoogleFonts.poppins(color: Colors.red)),
           backgroundColor: Colors.white,
           duration: const Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         ),
       );
       return;
@@ -158,9 +185,9 @@ class _CapturePageState extends State<CapturePage> {
         SnackBar(
           content: Text(
             status == 'In Progress' ? 'Report saved as Draft' : 'Report submitted successfully!',
-            style: GoogleFonts.poppins(color: Colors.red),
+            style: GoogleFonts.poppins(color: Colors.white),
           ),
-          backgroundColor: Colors.white,
+          backgroundColor: Colors.black,
           duration: const Duration(seconds: 3),
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -182,8 +209,10 @@ class _CapturePageState extends State<CapturePage> {
             'Error saving report. Please try again!',
             style: GoogleFonts.poppins(color: Colors.red),
           ),
-          backgroundColor: Colors.white,
+          backgroundColor: Colors.black,
           duration: const Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         ),
       );
     }
@@ -324,17 +353,25 @@ class _CapturePageState extends State<CapturePage> {
                 style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
-              TextField(
-                controller: phoneNumberController,
-                keyboardType: TextInputType.phone,
-                decoration: InputDecoration(
-                  labelText: 'Phone Number',
-                  border: const OutlineInputBorder(),
-                  errorText: validatePhoneNumber(phoneNumberController.text),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12.0), // Increased gap
+                child: TextField(
+                  controller: phoneNumberController,
+                  keyboardType: TextInputType.phone,
+                  decoration: InputDecoration(
+                    labelText: 'Phone Number',
+                    labelStyle: GoogleFonts.poppins(fontSize: 18, color: Colors.black),
+                    floatingLabelBehavior: FloatingLabelBehavior.always,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
+                    prefixText: '+60 ',
+                    errorText: phoneValidationMessage,
+                  ),
+                  onChanged: (value) {
+                    if (value.startsWith('+60') && value.length > 3 && (value.length == 13 || value.length == 14)) {
+                      validatePhoneNumber(value);
+                    }
+                  },
                 ),
-                onChanged: (value) {
-                  setState(() {});
-                },
               ),
               const SizedBox(height: 10),
               Row(
@@ -354,24 +391,35 @@ class _CapturePageState extends State<CapturePage> {
                     flex: 6,
                     child: TextField(
                       controller: locationController,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Location',
-                        border: OutlineInputBorder(),
+                        labelStyle: GoogleFonts.poppins(
+                          fontSize: 18, 
+                          color: Colors.black),
+                        floatingLabelBehavior: FloatingLabelBehavior.always,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        )
                       ),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 10),
-              TextField(
-                controller: descriptionController,
-                maxLines: 5,
-                decoration: const InputDecoration(
-                  labelText: 'Description',
-                  border: OutlineInputBorder(),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12.0),
+                child: TextField(
+                  controller: descriptionController,
+                  maxLines: 5,
+                  decoration: InputDecoration(
+                    labelText: 'Description',
+                    labelStyle: GoogleFonts.poppins(fontSize: 18, color: Colors.black),
+                    floatingLabelBehavior: FloatingLabelBehavior.always,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
+                  ),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 10),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -407,57 +455,6 @@ class _CapturePageState extends State<CapturePage> {
                     ),
                   ),
                 ],
-              ),
-            ],
-          ),
-        ),
-      ),
-      floatingActionButton: SizedBox(
-        width: 70,
-        height: 70,
-        child: FloatingActionButton(
-          onPressed: () {
-            Navigator.pushNamed(context, '/sos');
-          },
-          backgroundColor: Colors.red,
-          shape: CircleBorder(),
-          child: Text(
-            'SOS',
-            style: GoogleFonts.poppins(
-              fontSize: 20,
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(
-        color: Colors.white, // Bottom navigation bar color changed to white
-        shape: CircularNotchedRectangle(),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton(
-                icon: Icon(
-                  Icons.home,
-                  color: Colors.black,
-                ),
-                onPressed: () {
-                  Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
-                },
-              ),
-              SizedBox(width: 40), // Space for the SOS button in the center
-              IconButton(
-                icon: Icon(
-                  Icons.person,
-                  color: ModalRoute.of(context)?.settings.name == '/profile' ? Color(0xFFAD8FC6) : Colors.black,
-                ),
-                onPressed: () {
-                  Navigator.pushNamed(context, '/profile');
-                },
               ),
             ],
           ),
