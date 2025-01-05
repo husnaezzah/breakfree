@@ -35,79 +35,79 @@ class _SOSPageState extends State<SOSPage> {
 
       // Show the dialog again with the updated countdown
       if (mounted) {
-showDialog(
-  context: context,
-  barrierDismissible: false,
-  builder: (BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        'Activate the SOS button?',
-        style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
-        textAlign: TextAlign.center, // Center the title
-      ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'The SOS button will automatically activate when the time is up.',
-            style: GoogleFonts.poppins(),
-            textAlign: TextAlign.center, // Center the message
-          ),
-          SizedBox(height: 20),
-          // Countdown text centered
-          Text(
-            '$countdown seconds remaining',
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.bold,
-              color: Colors.red,
-            ),
-            textAlign: TextAlign.center, // Center the countdown
-          ),
-          SizedBox(height: 20),
-          // Progress bar to visually show countdown
-          LinearProgressIndicator(
-            value: countdown / 15, // Value reduces as countdown progresses
-            color: Colors.red,
-            backgroundColor: Colors.grey[300],
-          ),
-        ],
-      ),
-      actions: [
-        // Center the buttons
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextButton(
-              onPressed: () {
-                timer.cancel(); // Stop the timer
-                Navigator.of(context).pop(); // Close the dialog
-                Navigator.pushNamed(context, '/home'); // Navigate to the home page
-              },
-              child: Text(
-                'Cancel',
-                style: GoogleFonts.poppins(color: Colors.black),
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text(
+                'Activate the SOS button?',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center, // Center the title
               ),
-            ),
-            SizedBox(width: 10), // Spacing between buttons
-            ElevatedButton(
-              onPressed: () {
-                timer.cancel(); // Stop the timer
-                Navigator.of(context).pop(); // Close the dialog
-                initiateCall(); // Initiate the call
-              },
-              child: Text(
-                'Activate',
-                style: GoogleFonts.poppins(color: Colors.black),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'The SOS button will automatically activate when the time is up.',
+                    style: GoogleFonts.poppins(),
+                    textAlign: TextAlign.center, // Center the message
+                  ),
+                  SizedBox(height: 20),
+                  // Countdown text centered
+                  Text(
+                    '$countdown seconds remaining',
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red,
+                    ),
+                    textAlign: TextAlign.center, // Center the countdown
+                  ),
+                  SizedBox(height: 20),
+                  // Progress bar to visually show countdown
+                  LinearProgressIndicator(
+                    value: countdown / 15, // Value reduces as countdown progresses
+                    color: Colors.red,
+                    backgroundColor: Colors.grey[300],
+                  ),
+                ],
               ),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            ),
-          ],
-        ),
-      ],
-    );
-  },
-);
-
+              actions: [
+                // Center the buttons
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        timer.cancel(); // Stop the timer
+                        Navigator.of(context).pop(); // Close the dialog
+                        Navigator.pushNamedAndRemoveUntil(
+                            context, '/home', (route) => false); // Navigate to home and remove history
+                      },
+                      child: Text(
+                        'Cancel',
+                        style: GoogleFonts.poppins(color: Colors.black),
+                      ),
+                    ),
+                    SizedBox(width: 10), // Spacing between buttons
+                    ElevatedButton(
+                      onPressed: () {
+                        timer.cancel(); // Stop the timer
+                        Navigator.of(context).pop(); // Close the dialog
+                        initiateCall(); // Initiate the call
+                      },
+                      child: Text(
+                        'Activate',
+                        style: GoogleFonts.poppins(color: Colors.black),
+                      ),
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                    ),
+                  ],
+                ),
+              ],
+            );
+          },
+        );
       }
     });
   }
