@@ -95,8 +95,18 @@ class _CapturePageState extends State<CapturePage> {
     }
   }
 
+  String? validatePhoneNumber(String phoneNumber) {
+    if (!RegExp(
+            r'^(\+60[1-9]\d{8,9}|\+62\d{9,12}|\+66\d{9}|\+65\d{8}|\+63\d{10})$')
+        .hasMatch(phoneNumber)) {
+      return 'Invalid phone number format';
+    }
+    return null;
+  }
+
   Future<void> saveReport(String status) async {
-    if (phoneNumberController.text.isEmpty || locationController.text.isEmpty) {
+    if (status == 'Submitted' &&
+        (phoneNumberController.text.isEmpty || locationController.text.isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Phone Number and Location are required fields.',
@@ -113,7 +123,6 @@ class _CapturePageState extends State<CapturePage> {
     }
 
     try {
-      // ignore: unused_local_variable
       String? imageUrl;
 
       final String collection = status == 'In Progress' ? 'drafts' : 'submissions';
@@ -318,10 +327,14 @@ class _CapturePageState extends State<CapturePage> {
               TextField(
                 controller: phoneNumberController,
                 keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Phone Number',
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
+                  errorText: validatePhoneNumber(phoneNumberController.text),
                 ),
+                onChanged: (value) {
+                  setState(() {});
+                },
               ),
               const SizedBox(height: 10),
               Row(
