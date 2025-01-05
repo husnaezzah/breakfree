@@ -122,7 +122,6 @@ class _DiscussionPageState extends State<DiscussionPage> {
                           ),
                         ),
                         SizedBox(height: 8),
-                        // Row to place 'Posted on' and Like button in the same line
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -174,22 +173,22 @@ class _DiscussionPageState extends State<DiscussionPage> {
                       itemBuilder: (context, index) {
                         final comment = comments[index];
                         return Card(
-                          elevation: 2, // Reduced elevation for compact look
+                          elevation: 2,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8), // Smaller rounded corners
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                          margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0), // Reduced margin between cards
+                          margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
                           child: ListTile(
-                            contentPadding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0), // Reduced padding inside the card
+                            contentPadding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
                             leading: CircleAvatar(
-                              radius: 20, // Smaller avatar
+                              radius: 20,
                               backgroundColor: Colors.white,
                               child: Icon(Icons.person, color: const Color.fromARGB(255, 96, 32, 109)),
                             ),
                             title: Text(
                               comment['content'],
                               style: GoogleFonts.poppins(
-                                fontSize: 13, // Smaller font size for the content
+                                fontSize: 13,
                                 color: Colors.black,
                               ),
                             ),
@@ -222,16 +221,17 @@ class _DiscussionPageState extends State<DiscussionPage> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.all(10.0),
+                padding: EdgeInsets.all(10.0),
                 child: Row(
                   children: [
                     Expanded(
                       child: TextField(
                         controller: commentController,
                         decoration: InputDecoration(
+                          contentPadding: EdgeInsetsDirectional.symmetric(vertical: 8.0, horizontal: 16),
                           hintText: "Add a comment...",
                           hintStyle: GoogleFonts.poppins(
-                            fontSize: MediaQuery.of(context).size.width * 0.04,
+                            fontSize: MediaQuery.of(context).size.width * 0.035,
                             color: Colors.grey[500],
                           ),
                           border: OutlineInputBorder(
@@ -263,9 +263,16 @@ class _DiscussionPageState extends State<DiscussionPage> {
     );
   }
 
-  String _formatTimestamp(Timestamp timestamp) {
-    DateTime dateTime = timestamp.toDate();
-    return DateFormat('MMM d, yyyy h:mm a').format(dateTime);
+  String _formatTimestamp(dynamic timestamp) {
+    if (timestamp == null) {
+      return "Timestamp not available";
+    }
+    try {
+      DateTime dateTime = (timestamp as Timestamp).toDate();
+      return DateFormat('MMM d, yyyy h:mm a').format(dateTime);
+    } catch (e) {
+      return "Invalid timestamp";
+    }
   }
 
   Future<void> _addComment(String forumId, String content) async {
@@ -275,7 +282,7 @@ class _DiscussionPageState extends State<DiscussionPage> {
         .collection('comments')
         .add({
       'content': content,
-      'createdBy': 'Anonymous Penguin', // Replace with actual user
+      'createdBy': 'Anonymous Penguin',
       'timestamp': FieldValue.serverTimestamp(),
     });
   }
