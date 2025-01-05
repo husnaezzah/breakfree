@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/gestures.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProfilePage extends StatefulWidget {
   @override
@@ -259,14 +261,8 @@ class _ProfilePageState extends State<ProfilePage> {
               SizedBox(height: 10),
               InformationCard(
                 title: 'Women’s Aid Organization (WAO)',
-                description:
-                    'WAO provides shelter, counseling, and support for domestic violence survivors in Malaysia. Visit wao.org.my or call +603-7956 3488.',
-              ),
-              SizedBox(height: 10),
-              InformationCard(
-                title: 'Police Emergency Assistance',
-                description:
-                    'Contact the nearest police station or call 999 in case of immediate danger or threat.',
+                description: 'WAO provides shelter, counseling, and support for domestic violence survivors in Malaysia. Call +603-7956 3488 or visit',
+                link: 'https://wao.org.my', // Add hyperlink
               ),
               SizedBox(height: 10),
               InformationCard(
@@ -364,10 +360,12 @@ class _ProfilePageState extends State<ProfilePage> {
 class InformationCard extends StatelessWidget {
   final String title;
   final String description;
+  final String? link; // Add optional link field
 
   const InformationCard({
     required this.title,
     required this.description,
+    this.link,
   });
 
   @override
@@ -392,11 +390,36 @@ class InformationCard extends StatelessWidget {
             ),
           ),
           SizedBox(height: 5),
-          Text(
-            description,
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              color: Colors.grey[600],
+          RichText(
+            text: TextSpan(
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                color: Colors.grey[600],
+              ),
+              children: [
+                TextSpan(
+                  text: description,
+                ),
+                if (link != null) ...[
+                  TextSpan(text: ' '),
+                  TextSpan(
+                    text: link,
+                    style: TextStyle(
+                      color: Colors.blue,
+                      decoration: TextDecoration.underline,
+                    ),
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = () async {
+                        final uri = Uri.parse(link!);
+                        if (await canLaunchUrl(uri)) {
+                          await launchUrl(uri);
+                        } else {
+                          throw 'Could not launch $link';
+                        }
+                      },
+                  ),
+                ],
+              ],
             ),
           ),
         ],
@@ -404,3 +427,4 @@ class InformationCard extends StatelessWidget {
     );
   }
 }
+
