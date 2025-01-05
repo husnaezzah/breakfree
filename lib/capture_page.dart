@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_tflite/flutter_tflite.dart';
@@ -30,6 +31,9 @@ class _CapturePageState extends State<CapturePage> {
   String caseNumber = '';
   String? phoneValidationMessage;
   bool isMounted = true; 
+  bool agreeToPrivacy = false;
+  bool showPrivacyDetails = false;
+
 
     Future<void> _generateCaseNumber() async {
     final snapshot = await FirebaseFirestore.instance
@@ -116,8 +120,27 @@ class _CapturePageState extends State<CapturePage> {
       });
     }
   }
+  
 
   Future<void> saveReport(String status) async {
+
+    // Ensure agreement to privacy and confidentiality before saving
+    if (!agreeToPrivacy) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'You must agree to the privacy and confidentiality policy.',
+            style: GoogleFonts.poppins(color: Colors.red),
+          ),
+          backgroundColor: Colors.white,
+          duration: const Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        ),
+      );
+      return;
+    }
+
     // Ensure phone number is valid before saving
     if (phoneValidationMessage != null || phoneNumberController.text.isEmpty ) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -127,6 +150,9 @@ class _CapturePageState extends State<CapturePage> {
             style: GoogleFonts.poppins(color: Colors.red),
           ),
           backgroundColor: Colors.white,
+          duration: const Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         ),
       );
       return;
@@ -279,6 +305,7 @@ class _CapturePageState extends State<CapturePage> {
                 },
               ),
       ),
+      
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
@@ -306,39 +333,47 @@ class _CapturePageState extends State<CapturePage> {
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey),
                     borderRadius: BorderRadius.circular(0),
-                    image: const DecorationImage(image: AssetImage('assets/picture.png')),
                   ),
                   child: filePath != null
                       ? Image.file(
                           filePath!,
                           fit: BoxFit.cover,
                         )
-                      : const Center(child: Text('')),
+                      : Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.cloud_upload_outlined,
+                              size: 50,
+                              color: Color.fromARGB(255, 96, 32, 109)
+                            ),
+                            const SizedBox(height: 5), // Add spacing between the icon and button
+                            SizedBox(
+                              width: MediaQuery.of(context).size.width * 0.4,
+                              child: ElevatedButton(
+                                onPressed: pickImageGallery,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color.fromARGB(255, 96, 32, 109),
+                                  padding: const EdgeInsets.symmetric(vertical: 5),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                                ),
+                                child: Text(
+                                  "Browse Gallery",
+                                  style: GoogleFonts.poppins(fontSize: 13, color: Colors.white),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                 ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.6,
-                  child: ElevatedButton(
-                    onPressed: pickImageGallery,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 96, 32, 109),
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                    ),
-                    child: Text(
-                      "Browse Gallery",
-                      style: GoogleFonts.poppins(fontSize: 14, color: Colors.white),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10), // Spacing after the container
               ],
               Row(
                 children: [
                   Expanded(
-                    child: CheckboxListTile(
+                    child: SwitchListTile(
                       title: Text(
-                        'Attach image in the report?',
+                        'Attach Image in the Report',
                         style: GoogleFonts.poppins(
                           fontSize: 13,
                           fontStyle: FontStyle.italic,
@@ -357,6 +392,7 @@ class _CapturePageState extends State<CapturePage> {
                           }
                         });
                       },
+                      contentPadding: EdgeInsets.symmetric(horizontal: 8.0), 
                       activeColor: const Color.fromARGB(255, 96, 32, 109),
                       controlAffinity: ListTileControlAffinity.leading,
                     ),
@@ -435,6 +471,118 @@ class _CapturePageState extends State<CapturePage> {
                 ),
               ),
               const SizedBox(height: 10),
+             Row(
+  children: [
+    Checkbox(
+      value: agreeToPrivacy,
+      onChanged: (value) {
+        setState(() {
+          agreeToPrivacy = value ?? false;
+        });
+      },
+      activeColor: const Color.fromARGB(255, 96, 32, 109),
+    ),
+    Expanded(
+      child: RichText(
+        text: TextSpan(
+          style: GoogleFonts.poppins(fontSize: 13, color: Colors.black),
+          children: [
+            const TextSpan(text: 'I hereby agree to the '),
+            TextSpan(
+              text: 'Privacy Terms and Conditions',
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                color: const Color.fromARGB(255, 30, 126, 205),
+                decoration: TextDecoration.underline,
+              ),
+              recognizer: TapGestureRecognizer()
+                ..onTap = () {
+                  showDialog(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        title: Center(
+                          child: Text(
+                            'Privacy Terms and Conditions',
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        content: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '1. Information Collection\n',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                'BreakFree collects phone numbers, location data, and images related to domestic violence cases. This data is provided voluntarily by users and stored securely.\n\n',
+                                style: GoogleFonts.poppins(fontSize: 12),
+                              ),
+                              Text(
+                                '2. Information Usage\n',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                'Collected data is used to create reports, assist investigations, and improve services. Anonymized data may be used for research purposes.\n\n',
+                                style: GoogleFonts.poppins(fontSize: 12),
+                              ),
+                              Text(
+                                '3. Information Sharing\n',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                'Data is not shared without user consent, except when required by law or to protect user safety.\n\n',
+                                style: GoogleFonts.poppins(fontSize: 12),
+                              ),
+                              Text(
+                                '4. Data Security\n',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                'User data is protected with encryption and secure storage. Access is restricted to authorized personnel, and regular audits ensure compliance with privacy standards.',
+                                style: GoogleFonts.poppins(fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ),
+                        actions: [
+                          Center(
+                            child: TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                              child: Text(
+                                'Close',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  color: const Color.fromARGB(255, 96, 32, 109),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },); },),
+          ],),),
+            ),
+            ],),
+          const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [

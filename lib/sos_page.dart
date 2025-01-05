@@ -9,7 +9,7 @@ class SOSPage extends StatefulWidget {
 }
 
 class _SOSPageState extends State<SOSPage> {
-  int countdown = 15; // Countdown timer in seconds
+  int countdown = 10; // Countdown timer in seconds
   Timer? timer;
 
   @override
