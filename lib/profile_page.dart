@@ -28,7 +28,15 @@ class _ProfilePageState extends State<ProfilePage> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Details saved successfully!')),
+        SnackBar(content: Text('Details saved successfully!',
+        style: GoogleFonts.poppins(color: Colors.white),
+        ),
+         backgroundColor: Colors.black,
+          duration: const Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        ),
+
       );
     }
   }
