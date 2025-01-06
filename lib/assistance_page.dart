@@ -434,7 +434,7 @@ Widget build(BuildContext context) {
       ),
       title: Text(
         title,
-        style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
+        style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold),
       ),
       subtitle: Text(description),
       trailing: ElevatedButton(
