@@ -10,7 +10,7 @@ class HistoryPage extends StatelessWidget {
     return FirebaseFirestore.instance
         .collection('reports')
         .doc(collection)
-        .collection('all_cases')
+        .collection('anon_penguin')
         .snapshots();
   }
 
@@ -19,7 +19,7 @@ class HistoryPage extends StatelessWidget {
     await FirebaseFirestore.instance
         .collection('reports')
         .doc(collection)
-        .collection('all_cases')
+        .collection('anon_penguin')
         .doc(docId)
         .delete();
   }
@@ -29,7 +29,7 @@ class HistoryPage extends StatelessWidget {
     await FirebaseFirestore.instance
         .collection('reports')
         .doc('submissions')
-        .collection('all_cases')
+        .collection('anon_penguin')
         .add(reportData);
 
     await deleteReport('drafts', docId);

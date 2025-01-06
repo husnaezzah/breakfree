@@ -217,7 +217,7 @@ class _CapturePageState extends State<CapturePage> {
         await FirebaseFirestore.instance
             .collection('reports')
             .doc(collection)
-            .collection('all_cases')
+            .collection('anon_penguin')
             .add(reportData);
       }
 
