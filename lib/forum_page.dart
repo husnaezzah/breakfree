@@ -3,10 +3,16 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'discussion_page.dart';
 
-class ForumPage extends StatelessWidget {
+class ForumPage extends StatefulWidget {
+  @override
+  _ForumPageState createState() => _ForumPageState();
+}
+
+class _ForumPageState extends State<ForumPage> {
+  String searchQuery = '';
+
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       backgroundColor: Color.fromARGB(255, 251, 247, 247),
       appBar: AppBar(
@@ -45,8 +51,8 @@ class ForumPage extends StatelessWidget {
                 IconButton(
                   icon: Icon(
                     Icons.add,
-                     color: Color.fromARGB(255, 96, 32, 109),
-                     size:30,
+                    color: Color.fromARGB(255, 96, 32, 109),
+                    size: 30,
                   ),
                   onPressed: () {
                     _showCreateThreadDialog(context);
@@ -54,19 +60,49 @@ class ForumPage extends StatelessWidget {
                 ),
               ],
             ),
+            SizedBox(height: 10.0),
+            // Search Bar Below Forum Discussions Title
+            TextField(
+              onChanged: (value) {
+                setState(() {
+                  searchQuery = value.trim().toLowerCase();
+                });
+              },
+              decoration: InputDecoration(
+                labelText: 'Search Forums',
+                labelStyle: GoogleFonts.poppins(fontSize: 14, color: Colors.grey),
+                prefixIcon: Icon(Icons.search, color: Color.fromARGB(255, 96, 32, 109),),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30.0),
+                  borderSide: BorderSide(
+                    color: Colors.grey,
+                    width: 2.0)
+                ),
+              contentPadding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+              ),
+            ),
             SizedBox(height: 10),
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance.collection('forums').orderBy('timestamp', descending: true).snapshots(),
+                stream: FirebaseFirestore.instance
+                    .collection('forums')
+                    .orderBy('timestamp', descending: true)
+                    .snapshots(),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
                     return Center(child: CircularProgressIndicator());
                   }
                   final forums = snapshot.data!.docs;
+                  final filteredForums = forums.where((forum) {
+                    final title = forum['title'].toString().toLowerCase();
+                    final description = forum['description'].toString().toLowerCase();
+                    return title.contains(searchQuery) || description.contains(searchQuery);
+                  }).toList();
+
                   return ListView.builder(
-                    itemCount: forums.length,
+                    itemCount: filteredForums.length,
                     itemBuilder: (context, index) {
-                      final forum = forums[index];
+                      final forum = filteredForums[index];
                       return DiscussionCard(
                         forumId: forum.id,
                         title: forum['title'],
@@ -113,7 +149,7 @@ class ForumPage extends StatelessWidget {
               IconButton(
                 icon: Icon(
                   Icons.home,
-                  color: ModalRoute.of(context)?.settings.name == '/home' ?  Color(0xFFAD8FC6) : Colors.black,
+                  color: ModalRoute.of(context)?.settings.name == '/home' ? Color(0xFFAD8FC6) : Colors.black,
                 ),
                 onPressed: () {
                   Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
@@ -144,7 +180,7 @@ class ForumPage extends StatelessWidget {
       context: context,
       builder: (context) {
         return AlertDialog(
-             title: Center(
+          title: Center(
             child: Text(
               'Create New Thread',
               style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold),
@@ -156,14 +192,14 @@ class ForumPage extends StatelessWidget {
               TextField(
                 controller: titleController,
                 decoration: InputDecoration(
-                  labelText: 'Title',
-                  labelStyle: GoogleFonts.poppins(fontSize: 14, color: Colors.black, fontWeight: FontWeight.bold)),
+                    labelText: 'Title',
+                    labelStyle: GoogleFonts.poppins(fontSize: 14, color: Colors.black, fontWeight: FontWeight.bold)),
               ),
               TextField(
                 controller: descriptionController,
                 decoration: InputDecoration(
-                  labelText: 'Description',
-                  labelStyle: GoogleFonts.poppins(fontSize: 14, color: Colors.black, fontWeight: FontWeight.bold)),
+                    labelText: 'Description',
+                    labelStyle: GoogleFonts.poppins(fontSize: 14, color: Colors.black, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -172,25 +208,29 @@ class ForumPage extends StatelessWidget {
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: Text('Cancel',
-              style: GoogleFonts.poppins(fontSize: 14, color: const Color.fromARGB(255, 96, 32, 109))),),
+              child: Text(
+                'Cancel',
+                style: GoogleFonts.poppins(fontSize: 14, color: const Color.fromARGB(255, 96, 32, 109)),
+              ),
+            ),
             TextButton(
-          onPressed: () {
-            final title = titleController.text.trim();
-            final description = descriptionController.text.trim();
-            if (title.isNotEmpty && description.isNotEmpty) {
-              _createForumThread(title, description);
-              Navigator.pop(context);
-            }
-          },
-            style: TextButton.styleFrom(
-              backgroundColor: const Color.fromARGB(255, 96, 32, 109), // Set your desired text color
+              onPressed: () {
+                final title = titleController.text.trim();
+                final description = descriptionController.text.trim();
+                if (title.isNotEmpty && description.isNotEmpty) {
+                  _createForumThread(title, description);
+                  Navigator.pop(context);
+                }
+              },
+              style: TextButton.styleFrom(
+                backgroundColor: const Color.fromARGB(255, 96, 32, 109),
+              ),
+              child: Text(
+                'Create',
+                style: GoogleFonts.poppins(fontSize: 14, color: Colors.white),
+              ),
             ),
-              child: Text('Create',
-              style: GoogleFonts.poppins(fontSize: 14, color: Colors.white),
-            ),
-            ),
-          ]
+          ],
         );
       },
     );
@@ -235,11 +275,11 @@ class _DiscussionCardState extends State<DiscussionCard> {
     final doc = await FirebaseFirestore.instance.collection('forums').doc(widget.forumId).get();
     if (doc.exists) {
       final data = doc.data()!;
-      setState(() {
-        likeCount = data['likes'] ?? 0;
-        // Assuming you track user IDs for likes:
-        // isLiked = (data['likedBy'] as List).contains(currentUserId);
-      });
+      if (mounted) {
+        setState(() {
+          likeCount = data['likes'] ?? 0;
+        });
+      }
     }
   }
 
@@ -253,20 +293,18 @@ class _DiscussionCardState extends State<DiscussionCard> {
       final currentLikes = data['likes'] ?? 0;
 
       if (isLiked) {
-        // Unlike
         transaction.update(docRef, {'likes': currentLikes - 1});
-        // Remove user ID from likedBy if needed
       } else {
-        // Like
         transaction.update(docRef, {'likes': currentLikes + 1});
-        // Add user ID to likedBy if needed
       }
     });
 
-    setState(() {
-      isLiked = !isLiked;
-      likeCount += isLiked ? 1 : -1;
-    });
+    if (mounted) {
+      setState(() {
+        isLiked = !isLiked;
+        likeCount += isLiked ? 1 : -1;
+      });
+    }
   }
 
   @override
@@ -332,13 +370,13 @@ class _DiscussionCardState extends State<DiscussionCard> {
                       ),
                     );
                   },
-                child: Text(
-                  "View Discussion",
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: Colors.purple,
+                  child: Text(
+                    "View Discussion",
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      color: Colors.purple,
+                    ),
                   ),
-                ),
                 ),
               ],
             ),
