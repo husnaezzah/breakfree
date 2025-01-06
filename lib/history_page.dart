@@ -15,26 +15,72 @@ class HistoryPage extends StatelessWidget {
         .snapshots();
   }
 
-  // Delete a specific report
-  Future<void> deleteReport(String collection, String docId) async {
-    await FirebaseFirestore.instance
-        .collection('reports')
-        .doc(collection)
-        .collection('anon_penguin')
-        .doc(docId)
-        .delete();
+  // Delete a specific report with confirmation dialog
+  Future<void> deleteReport(BuildContext context, String collection, String docId) async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Delete Report?',
+            style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          content: Text(
+            'This will delete the report case permanently. You cannot undo this action.',
+            style: GoogleFonts.poppins(fontSize: 13),
+          ),
+          actions: [
+           TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Close the dialog
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: const Color.fromARGB(255, 96, 32, 109),  // Text color for 'Cancel' button
+            ),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.poppins(fontSize: 13),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(context).pop(); // Close the dialog after deletion
+
+              // Proceed with deletion if confirmed
+              await FirebaseFirestore.instance
+                  .collection('reports')
+                  .doc(collection)
+                  .collection('anon_penguin')
+                  .doc(docId)
+                  .delete();
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.white, backgroundColor: Colors.red, // Text color for 'Delete' button
+            ) ,
+            child: Text(
+              'Delete',
+              style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.bold),
+            ),
+          ),
+
+          ],
+        );
+      },
+    );
   }
 
-  // Move draft to submissions upon completion
-  Future<void> moveDraftToRecent(Map<String, dynamic> reportData, String docId) async {
-    await FirebaseFirestore.instance
-        .collection('reports')
-        .doc('submissions')
-        .collection('anon_penguin')
-        .add(reportData);
+  // Move draft to submissions upon completion with context parameter
+Future<void> moveDraftToRecent(BuildContext context, Map<String, dynamic> reportData, String docId) async {
+  // Move the report data to 'submissions' collection
+  await FirebaseFirestore.instance
+      .collection('reports')
+      .doc('submissions')
+      .collection('anon_penguin')
+      .add(reportData);
 
-    await deleteReport('drafts', docId);
-  }
+  // Now delete the report from drafts using confirmation
+  await deleteReport(context, 'drafts', docId);
+}
 
   @override
   Widget build(BuildContext context) {
@@ -144,7 +190,7 @@ class HistoryPage extends StatelessWidget {
                                     ),
                                     IconButton(
                                       icon: const Icon(Icons.delete, color: Colors.red),
-                                      onPressed: () => deleteReport('drafts', draft.id),
+                                      onPressed: () => deleteReport(context, 'drafts', draft.id),
                                     ),
                                   ],
                                 ),
@@ -225,7 +271,7 @@ class HistoryPage extends StatelessWidget {
                                   IconButton(
                                     icon: const Icon(Icons.delete, color: Colors.red),
                                     onPressed: () =>
-                                        deleteReport('submissions', submission.id),
+                                        deleteReport(context, 'submissions', submission.id),
                                   ),
                                 ],
                               ),
