@@ -264,6 +264,12 @@ class _ProfilePageState extends State<ProfilePage> {
                 description: 'WAO provides shelter, counseling, and support for domestic violence survivors in Malaysia. Call +603-7956 3488 or visit',
                 link: 'https://wao.org.my', // Add hyperlink
               ),
+               SizedBox(height: 10),
+              InformationCard(
+                title: 'Tenaganita',
+                description: 'Tenaganita provides support and assistance for migrant workers, refugees, and victims of trafficking and domestic violence. Call +603-7770 3671 or visit',
+                link: 'https://tenaganita.net/', // Add hyperlink
+              ),
               SizedBox(height: 10),
               InformationCard(
                 title: 'LPPKN Counseling Services',
@@ -412,9 +418,15 @@ class InformationCard extends StatelessWidget {
                       ..onTap = () async {
                         final uri = Uri.parse(link!);
                         if (await canLaunchUrl(uri)) {
-                          await launchUrl(uri);
+                          await launchUrl(
+                            uri,
+                            mode: LaunchMode.externalApplication,
+                            );
                         } else {
-                          throw 'Could not launch $link';
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text ('Could not launch $link'))
+                          );
                         }
                       },
                   ),
