@@ -34,16 +34,39 @@ class _CapturePageState extends State<CapturePage> {
   bool agreeToPrivacy = false;
   bool showPrivacyDetails = false;
 
+  Future<void> _generateCaseNumber() async {
+    try {
+      if (caseNumber.isNotEmpty) return; // Prevent reassignment
 
-    Future<void> _generateCaseNumber() async {
-    final snapshot = await FirebaseFirestore.instance
-        .collection('reports/drafts/all_cases')
-        .get();
-    final nextNumber = snapshot.size + 1;
-    if (isMounted) {
+      final draftsSnapshot = await FirebaseFirestore.instance
+          .collection('reports')
+          .doc('drafts')
+          .collection('anon_penguin')
+          .get();
+
+      final submissionsSnapshot = await FirebaseFirestore.instance
+          .collection('reports')
+          .doc('submissions')
+          .collection('anon_penguin')
+          .get();
+
+      final allCaseNumbers = {
+        ...draftsSnapshot.docs.map((doc) => doc['case_number'] as String),
+        ...submissionsSnapshot.docs.map((doc) => doc['case_number'] as String),
+      };
+
+      int nextNumber = 1;
+      while (allCaseNumbers.contains('C${nextNumber.toString().padLeft(2, '0')}')) {
+        nextNumber++;
+      }
+
       setState(() {
         caseNumber = 'C${nextNumber.toString().padLeft(2, '0')}';
       });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error generating case number: $e')),
+      );
     }
   }
 
@@ -120,12 +143,11 @@ class _CapturePageState extends State<CapturePage> {
       });
     }
   }
-  
 
   Future<void> saveReport(String status) async {
 
     // Ensure agreement to privacy and confidentiality before saving
-    if (!agreeToPrivacy) {
+    if (status == 'Submitted' && !agreeToPrivacy) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -142,7 +164,7 @@ class _CapturePageState extends State<CapturePage> {
     }
 
     // Ensure phone number is valid before saving
-    if (phoneValidationMessage != null || phoneNumberController.text.isEmpty ) {
+    if ( phoneValidationMessage != null || phoneNumberController.text.isEmpty ) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -159,10 +181,10 @@ class _CapturePageState extends State<CapturePage> {
     }
 
     if (status == 'Submitted' &&
-        (phoneNumberController.text.isEmpty || locationController.text.isEmpty || descriptionController.text.isEmpty)) {
+        ( locationController.text.isEmpty || descriptionController.text.isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Phone Number, Location and Description are required fields.',
+          content: Text('Location and Description are required fields.',
               style: GoogleFonts.poppins(color: Colors.red)),
           backgroundColor: Colors.white,
           duration: const Duration(seconds: 3),
@@ -172,26 +194,20 @@ class _CapturePageState extends State<CapturePage> {
       );
       return;
     }
-
-    if (caseNumber.isEmpty) {
+        // Generate case number dynamically
+        if (caseNumber.isEmpty) {
       await _generateCaseNumber();
     }
 
     try {
-      String? imageUrl;
+      String imageUrl = 'https://example.com/default-image.png';
 
-      final String collection = status == 'In Progress' ? 'drafts' : 'submissions';
-
-      if (filePath != null && isImageEnabled) {
-        final String fileName = DateTime.now().millisecondsSinceEpoch.toString();
-        final Reference storageRef = FirebaseStorage.instance.ref().child('images/$fileName');
-
-        final UploadTask uploadTask = storageRef.putFile(filePath!);
-
-        final TaskSnapshot snapshot = await uploadTask.whenComplete(() {});
+      if (filePath != null) {
+        final fileName = DateTime.now().millisecondsSinceEpoch.toString();
+        final storageRef = FirebaseStorage.instance.ref().child('images/$fileName');
+        final uploadTask = storageRef.putFile(filePath!);
+        final snapshot = await uploadTask.whenComplete(() {});
         imageUrl = await snapshot.ref.getDownloadURL();
-      } else {
-        imageUrl = 'https://example.com/default-image.png';
       }
 
       final reportData = {
@@ -204,57 +220,36 @@ class _CapturePageState extends State<CapturePage> {
         'image_url': imageUrl,
       };
 
-      if (widget.caseId != null) {
-        // Update existing report
-        await FirebaseFirestore.instance
-            .collection('reports')
-            .doc(collection)
-            .collection('all_cases')
-            .doc(widget.caseId)
-            .set(reportData);
-      } else {
-        // Create new report
-        await FirebaseFirestore.instance
-            .collection('reports')
-            .doc(collection)
-            .collection('anon_penguin')
-            .add(reportData);
-      }
+      final collection = status == 'In Progress' ? 'drafts' : 'submissions';
+
+      await FirebaseFirestore.instance
+          .collection('reports')
+          .doc(collection)
+          .collection('anon_penguin')
+          .add(reportData);
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            status == 'In Progress' ? 'Report saved as Draft' : 'Report submitted successfully!',
-            style: GoogleFonts.poppins(color: Colors.white),
-          ),
+              status == 'In Progress' ? 'Saved as Draft' : 'Report Submitted Successfully',
+          style: GoogleFonts.poppins(color: Colors.white)),
           backgroundColor: Colors.black,
           duration: const Duration(seconds: 3),
           behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        ),
-      );
+          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),),);
 
       setState(() {
         filePath = null;
-        label = '';
         caseNumber = '';
-        phoneNumberController.clear();
-        locationController.clear();
-        descriptionController.clear();
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Error saving report. Please try again!',
-            style: GoogleFonts.poppins(color: Colors.red),
-          ),
-          backgroundColor: Colors.black,
+        SnackBar(content: Text('Error Saving Report.',
+        style: GoogleFonts.poppins(color: Colors.red)),
+          backgroundColor: Colors.white,
           duration: const Duration(seconds: 3),
           behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        ),
-      );
+          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),),);
     }
   }
 
