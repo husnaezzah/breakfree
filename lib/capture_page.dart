@@ -1,8 +1,9 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_tflite/flutter_tflite.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -11,7 +12,7 @@ import 'package:geocoding/geocoding.dart';
 import 'dart:developer' as devtools;
 
 class CapturePage extends StatefulWidget {
-  final Map<String, dynamic>? reportData; // Added to handle editing existing reports
+  final Map<String, dynamic>? reportData;
   final String? caseId;
 
   const CapturePage({super.key, this.reportData, this.caseId});
@@ -30,13 +31,48 @@ class _CapturePageState extends State<CapturePage> {
   final TextEditingController phoneNumberController = TextEditingController();
   String caseNumber = '';
   String? phoneValidationMessage;
-  bool isMounted = true; 
   bool agreeToPrivacy = false;
-  bool showPrivacyDetails = false;
+
+  @override
+  void initState() {
+    super.initState();
+    devtools.log('Initializing CapturePage with data: ${widget.reportData}');
+    if (widget.reportData != null) {
+      final report = widget.reportData!;
+      caseNumber = report['case_number'];
+      phoneNumberController.text = report['phone_number'];
+      locationController.text = report['location'];
+      descriptionController.text = report['description'];
+
+      //Load the image URL
+      if (report['image_url'] != null && report['image_url'].isNotEmpty) {
+        setState(() {
+          filePath = null;
+        });
+      }
+    } else {
+      _tfliteInit();
+      _generateCaseNumber();
+    }
+  }
+
+  Future<void> _tfliteInit() async {
+    try {
+      await Tflite.loadModel(
+        model: "assets/model_unquant.tflite",
+        labels: "assets/labels.txt",
+        numThreads: 1,
+        isAsset: true,
+        useGpuDelegate: false,
+      );
+    } catch (e) {
+      devtools.log('Failed to load TFLite model: $e');
+    }
+  }
 
   Future<void> _generateCaseNumber() async {
     try {
-      if (caseNumber.isNotEmpty) return; // Prevent reassignment
+      if (caseNumber.isNotEmpty) return;
 
       final draftsSnapshot = await FirebaseFirestore.instance
           .collection('reports')
@@ -70,45 +106,11 @@ class _CapturePageState extends State<CapturePage> {
     }
   }
 
-  Future<void> _tfliteInit() async {
-    await Tflite.loadModel(
-      model: "assets/model_unquant.tflite",
-      labels: "assets/labels.txt",
-      numThreads: 1,
-      isAsset: true,
-      useGpuDelegate: false,
-    );
-  }
-
-  Future<void> _getCurrentLocation() async {
-    try {
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-
-      final placeMarks = await placemarkFromCoordinates(
-        position.latitude, position.longitude,
-      );
-
-      if (placeMarks.isNotEmpty) {
-        final place = placeMarks[0];
-        setState(() {
-          locationController.text = "${place.locality}, ${place.administrativeArea}";
-        });
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to get location: $e', style: GoogleFonts.poppins(color: Colors.red))),
-      );
-    }
-  }
-
   Future<void> pickImageGallery() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
     if (image == null) return;
-    var imageMap = File(image.path);
     setState(() {
-      filePath = imageMap;
+      filePath = File(image.path);
     });
 
     var recognitions = await Tflite.runModelOnImage(
@@ -126,16 +128,14 @@ class _CapturePageState extends State<CapturePage> {
       });
     } else {
       devtools.log("Recognition failed");
-    }
+      }
   }
 
-   // Validate phone number (+60 followed by 8 or 9 digits)
   void validatePhoneNumber(String phoneNumber) {
     final phonePattern = RegExp(r'^\d{8,9}$');
     if (!phonePattern.hasMatch(phoneNumber)) {
       setState(() {
-        phoneValidationMessage =
-            'Invalid phone number format.';
+        phoneValidationMessage = 'Invalid phone number format.';
       });
     } else {
       setState(() {
@@ -144,9 +144,58 @@ class _CapturePageState extends State<CapturePage> {
     }
   }
 
-  Future<void> saveReport(String status) async {
+  Future<void> _getCurrentLocation() async {
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
 
-    // Ensure agreement to privacy and confidentiality before saving
+      final placeMarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      if (placeMarks.isNotEmpty) {
+        final place = placeMarks[0];
+        setState(() {
+          locationController.text = "${place.locality}, ${place.administrativeArea}";
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to get location: $e')),
+      );
+    }
+  }
+
+
+  Future<String> uploadImageToCloudinary(File imageFile) async {
+    final cloudinaryUrl = "https://api.cloudinary.com/v1_1/dptzx1six/image/upload";
+
+    try {
+      final request = http.MultipartRequest("POST", Uri.parse(cloudinaryUrl));
+      request.fields['upload_preset'] = 'ml_default'; // Ensure the preset exists
+      request.files.add(await http.MultipartFile.fromPath('file', imageFile.path));
+
+      final response = await request.send();
+      if (response.statusCode == 200) {
+        final responseData = await response.stream.bytesToString();
+        final jsonResponse = jsonDecode(responseData);
+        return jsonResponse['secure_url']; // Return uploaded image URL
+      } else {
+        final responseData = await response.stream.bytesToString();
+        print('Cloudinary Error: $responseData'); // Log detailed error
+        throw Exception('Failed to upload image to Cloudinary');
+      }
+    } catch (e) {
+      print('Upload Exception: $e');
+      throw Exception('Failed to upload image to Cloudinary');
+    }
+  }
+
+
+  Future<void> saveReport(String status) async {
+    // Validation for submitted reports
     if (status == 'Submitted' && !agreeToPrivacy) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -155,16 +204,12 @@ class _CapturePageState extends State<CapturePage> {
             style: GoogleFonts.poppins(color: Colors.red),
           ),
           backgroundColor: Colors.white,
-          duration: const Duration(seconds: 3),
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         ),
       );
       return;
     }
 
-    // Ensure phone number is valid before saving
-    if ( phoneValidationMessage != null || phoneNumberController.text.isEmpty ) {
+    if (phoneValidationMessage != null || phoneNumberController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -172,44 +217,43 @@ class _CapturePageState extends State<CapturePage> {
             style: GoogleFonts.poppins(color: Colors.red),
           ),
           backgroundColor: Colors.white,
-          duration: const Duration(seconds: 3),
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         ),
       );
       return;
     }
 
     if (status == 'Submitted' &&
-        ( locationController.text.isEmpty || descriptionController.text.isEmpty)) {
+        (locationController.text.isEmpty || descriptionController.text.isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Location and Description are required fields.',
-              style: GoogleFonts.poppins(color: Colors.red)),
+          content: Text(
+            'Location and Description are required fields.',
+            style: GoogleFonts.poppins(color: Colors.red),
+          ),
           backgroundColor: Colors.white,
-          duration: const Duration(seconds: 3),
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         ),
       );
       return;
     }
-        // Generate case number dynamically
-        if (caseNumber.isEmpty) {
+
+    // Generate a case number if missing
+    if (caseNumber.isEmpty) {
       await _generateCaseNumber();
     }
 
-    try {
-      String imageUrl = 'https://example.com/default-image.png';
+    // Check if updating an existing draft
+    final isUpdating = widget.caseId != null;
 
+    try {
+      // Set default image URL if no image is provided
+      String imageUrl = widget.reportData?['image_url'] ?? 'https://example.com/default-image.png';
+
+      // Upload image to Cloudinary if a new file is selected
       if (filePath != null) {
-        final fileName = DateTime.now().millisecondsSinceEpoch.toString();
-        final storageRef = FirebaseStorage.instance.ref().child('images/$fileName');
-        final uploadTask = storageRef.putFile(filePath!);
-        final snapshot = await uploadTask.whenComplete(() {});
-        imageUrl = await snapshot.ref.getDownloadURL();
+        imageUrl = await uploadImageToCloudinary(filePath!);
       }
 
+      // Prepare report data
       final reportData = {
         'case_number': caseNumber,
         'phone_number': '+60 ${phoneNumberController.text}',
@@ -220,62 +264,70 @@ class _CapturePageState extends State<CapturePage> {
         'image_url': imageUrl,
       };
 
+      // Determine Firestore collection
       final collection = status == 'In Progress' ? 'drafts' : 'submissions';
 
-      await FirebaseFirestore.instance
-          .collection('reports')
-          .doc(collection)
-          .collection('anon_penguin')
-          .add(reportData);
+      if (isUpdating) {
+        // Update an existing draft
+        await FirebaseFirestore.instance
+            .collection('reports')
+            .doc(collection)
+            .collection('anon_penguin')
+            .doc(widget.caseId)
+            .set(reportData);
+      } else {
+        // Add a new draft or submission
+        await FirebaseFirestore.instance
+            .collection('reports')
+            .doc(collection)
+            .collection('anon_penguin')
+            .add(reportData);
+      }
 
+      // Success message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-              status == 'In Progress' ? 'Saved as Draft' : 'Report Submitted Successfully',
-          style: GoogleFonts.poppins(color: Colors.white)),
+            isUpdating
+                ? 'Draft Updated Successfully'
+                : status == 'In Progress'
+                    ? 'Saved as Draft'
+                    : 'Report Submitted Successfully',
+            style: GoogleFonts.poppins(color: Colors.white),
+          ),
           backgroundColor: Colors.black,
-          duration: const Duration(seconds: 3),
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),),);
+        ),
+      );
 
-      setState(() {
-        filePath = null;
-        caseNumber = '';
-      });
+      // Clear fields after saving
+      if (status != 'In Progress') {
+        setState(() {
+          filePath = null;
+          caseNumber = '';
+        });
+      }
     } catch (e) {
+      // Error handling
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error Saving Report.',
-        style: GoogleFonts.poppins(color: Colors.red)),
+        SnackBar(
+          content: Text(
+            'Error Saving Report: $e',
+            style: GoogleFonts.poppins(color: Colors.red),
+          ),
           backgroundColor: Colors.white,
-          duration: const Duration(seconds: 3),
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),),);
+        ),
+      );
     }
   }
 
+
   @override
-  void dispose() {
-    isMounted = false;
+    void dispose() {
     Tflite.close();
     locationController.dispose();
     descriptionController.dispose();
     phoneNumberController.dispose();
     super.dispose();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.reportData != null) {
-      final report = widget.reportData!;
-      caseNumber = report['case_number'];
-      phoneNumberController.text = report['phone_number'];
-      locationController.text = report['location'];
-      descriptionController.text = report['description'];
-    } else {
-      _tfliteInit();
-      _generateCaseNumber();
-    }
   }
 
   @override
@@ -334,33 +386,44 @@ class _CapturePageState extends State<CapturePage> {
                           filePath!,
                           fit: BoxFit.cover,
                         )
-                      : Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.cloud_upload_outlined,
-                              size: 50,
-                              color: Color.fromARGB(255, 96, 32, 109)
-                            ),
-                            const SizedBox(height: 5), // Add spacing between the icon and button
-                            SizedBox(
-                              width: MediaQuery.of(context).size.width * 0.4,
-                              child: ElevatedButton(
-                                onPressed: pickImageGallery,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color.fromARGB(255, 96, 32, 109),
-                                  padding: const EdgeInsets.symmetric(vertical: 5),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                      : widget.reportData?['image_url'] != null
+                          ? Image.network(
+                              widget.reportData!['image_url'],
+                              fit: BoxFit.cover,
+                            )
+                          : Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.cloud_upload_outlined,
+                                  size: 50,
+                                  color: Color.fromARGB(255, 96, 32, 109),
                                 ),
-                                child: Text(
-                                  "Browse Gallery",
-                                  style: GoogleFonts.poppins(fontSize: 13, color: Colors.white),
+                                const SizedBox(height: 5), // Spacing between the icon and button
+                                SizedBox(
+                                  width: MediaQuery.of(context).size.width * 0.4,
+                                  child: ElevatedButton(
+                                    onPressed: pickImageGallery,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color.fromARGB(255, 96, 32, 109),
+                                      padding: const EdgeInsets.symmetric(vertical: 5),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(30),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      "Browse Gallery",
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 13,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
-                          ],
-                        ),
                 ),
+
                 const SizedBox(height: 10), // Spacing after the container
               ],
               Row(
