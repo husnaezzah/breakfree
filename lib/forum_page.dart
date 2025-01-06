@@ -303,7 +303,7 @@ class _DiscussionCardState extends State<DiscussionCard> {
             Text(
               widget.description,
               style: GoogleFonts.poppins(
-                fontSize: 10,
+                fontSize: 12,
                 color: Colors.grey[600],
               ),
             ),
@@ -332,10 +332,13 @@ class _DiscussionCardState extends State<DiscussionCard> {
                       ),
                     );
                   },
-                  child: Text(
-                    "View Discussion",
-                    style: GoogleFonts.poppins(color: Colors.purple),
+                child: Text(
+                  "View Discussion",
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    color: Colors.purple,
                   ),
+                ),
                 ),
               ],
             ),
