@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'dart:developer' as devtools;
 
 class HistoryPage extends StatelessWidget {
   const HistoryPage({Key? key}) : super(key: key);
@@ -94,6 +95,7 @@ class HistoryPage extends StatelessWidget {
 
                             return GestureDetector(
                               onTap: () {
+                                devtools.log('Navigating to CapturePage with data: $reportData');
                                 // Pass the stored report data and case ID to the capture page
                                 Navigator.pushNamed(
                                   context,
