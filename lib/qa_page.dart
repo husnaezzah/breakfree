@@ -17,14 +17,74 @@ class _QAPageState extends State<QAPage> {
         message.toLowerCase().contains("police") ||
         message.toLowerCase().contains("hospital") ||
         message.toLowerCase().contains("medical") ||
+        message.toLowerCase().contains("nearby") ||
+        message.toLowerCase().contains("aid") ||
+        message.toLowerCase().contains("resources") ||
         message.toLowerCase().contains("assistance")) {
       _addTextResponse("Please don't hesitate to take action and reach out to these resources. Your safety is our top priority.");
-      _addAssistanceButton();  // Add button to go to assistance page
+      _addAssistanceButton();
+
+    }  else if (message.toLowerCase().contains("report") ||
+        message.toLowerCase().contains("evidence") ||
+        message.toLowerCase().contains("capture") ||
+        message.toLowerCase().contains("photo") ||
+        message.toLowerCase().contains("file") ||
+        message.toLowerCase().contains("upload")) {
+      _addCaptureButton();  // Add button to go to capture page
+
+    }  else if (message.toLowerCase().contains("forum") ||
+        message.toLowerCase().contains("discussion") ||
+        message.toLowerCase().contains("community") ||
+        message.toLowerCase().contains("group") ||
+        message.toLowerCase().contains("support") ||
+        message.toLowerCase().contains("share") ||
+        message.toLowerCase().contains("experience") ||
+        message.toLowerCase().contains("post") ||
+        message.toLowerCase().contains("find") ||
+        message.toLowerCase().contains("online")) {
+      _addForumButton();  // Add button to go to forum page
+
+    }  else if (message.toLowerCase().contains("SOS") ||
+        message.toLowerCase().contains("sos") ||
+        message.toLowerCase().contains("emergency") ||
+        message.toLowerCase().contains("alert") ||
+        message.toLowerCase().contains("quick") ||
+        message.toLowerCase().contains("panic") ||
+        message.toLowerCase().contains("contact") ||
+        message.toLowerCase().contains("notify") ||
+        message.toLowerCase().contains("hotline") ||
+        message.toLowerCase().contains("crisis") ||
+        message.toLowerCase().contains("call")) {
+      _addSOSButton();  // Add button to go to SOS page
+
+        } else if (message.toLowerCase().contains("tired") ||
+          message.toLowerCase().contains("down") ||
+          message.toLowerCase().contains("exhaust") ||
+          message.toLowerCase().contains("fatigue") ||
+          message.toLowerCase().contains("drain") ||
+          message.toLowerCase().contains("burn") ||
+          message.toLowerCase().contains("low") ||
+          message.toLowerCase().contains("down") ||
+          message.toLowerCase().contains("unhappy") ||
+          message.toLowerCase().contains("dispirit") ||
+          message.toLowerCase().contains("sorrow") ||
+          message.toLowerCase().contains("upset") ||
+          message.toLowerCase().contains("mourn") ||
+          message.toLowerCase().contains("sad")) {
+        _addTextResponse("I'm sorry you're feeling this way. It's okay to have tough days. Remember, you're not alone, and it's important to take care of yourself. If you need someone to talk to, consider reaching out to a trusted person or a support hotline. You can also explore the resources in BreakFree for additional help :)");
+
+    }  else if (message.toLowerCase().contains("history") ||
+        message.toLowerCase().contains("delete") ||
+        message.toLowerCase().contains("view")) {
+      _addHistoryButton();  // Add button to go to history page
+
     } else if (RegExp(r'\b(hit)\b', caseSensitive: false).hasMatch(message)) {
       _addTextResponse("No one should ever hit you. If you're in immediate danger, please activate the SOS button or contact emergency services.");
     } else if (message.toLowerCase().contains("hello") || message.toLowerCase().contains("hi")) {
       _addTextResponse("Hello! How can I assist you today?");
-    } else if (message.toLowerCase().contains("domestic") || message.toLowerCase().contains("violence")) {
+    } else if (message.toLowerCase().contains("domestic") ||
+        message.toLowerCase().contains("violence") ||
+        message.toLowerCase().contains("abuse")) {
       setState(() {
         _messages.add({
           "bot_image": Image.asset(
@@ -129,10 +189,6 @@ class _QAPageState extends State<QAPage> {
             _addTextResponse("Isolation doesn't just mean keeping you away from people—it can also mean discouraging you from sharing your feelings or seeking outside help.");
           });
             
-    } else if (message.toLowerCase().contains("resources")) {
-      _addTextResponse("Our app provides local resources including nearby shelters, hospitals, and hotlines. You can find help close by anytime.");
-    } else if (message.toLowerCase().contains("emergency")) {
-      _addTextResponse("Activate SOS button now!");
     } else if (message.toLowerCase().contains("hurt")) {
       _addTextResponse("I'm sorry you're feeling hurt. If you're in danger, please use the SOS button for help or contact a trusted person or hotline.");
     } else if (message.toLowerCase().contains("confidentiality")) {
@@ -194,6 +250,75 @@ class _QAPageState extends State<QAPage> {
           ),
           child: Text(
             'Go to Assistance Page',
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              color: Colors.white,
+            ),
+          ),
+        ),
+      });
+    });
+  }
+
+  // Method to add a button to navigate to the capture page
+  void _addCaptureButton() {
+    setState(() {
+      _messages.add({
+        "bot": TextButton(
+          onPressed: () {
+            Navigator.pushNamed(context, '/capture');  // Navigate to the Capture Page
+          },
+          style: TextButton.styleFrom(
+            backgroundColor: const Color.fromARGB(255, 96, 32, 109), // Set your desired background color
+          ),
+          child: Text(
+            'Go to Capture Page',
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              color: Colors.white,
+            ),
+          ),
+        ),
+      });
+    });
+  }
+
+  // Method to add a button to navigate to the history page
+  void _addHistoryButton() {
+    setState(() {
+      _messages.add({
+        "bot": TextButton(
+          onPressed: () {
+            Navigator.pushNamed(context, '/history');  // Navigate to the Capture Page
+          },
+          style: TextButton.styleFrom(
+            backgroundColor: const Color.fromARGB(255, 96, 32, 109), // Set your desired background color
+          ),
+          child: Text(
+            'Go to History Page',
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              color: Colors.white,
+            ),
+          ),
+        ),
+      });
+    });
+  }
+
+  // Method to add a button to navigate to the forum page
+  void _addForumButton() {
+    setState(() {
+      _messages.add({
+        "bot": TextButton(
+          onPressed: () {
+            Navigator.pushNamed(context, '/forum');  // Navigate to the Capture Page
+          },
+          style: TextButton.styleFrom(
+            backgroundColor: const Color.fromARGB(255, 96, 32, 109), // Set your desired background color
+          ),
+          child: Text(
+            'Go to Forum Page',
             style: GoogleFonts.poppins(
               fontSize: 14,
               color: Colors.white,
