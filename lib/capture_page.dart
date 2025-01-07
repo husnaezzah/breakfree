@@ -164,11 +164,7 @@ class _CapturePageState extends State<CapturePage> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to Get Location.',
-        style: GoogleFonts.poppins(color: Colors.red)),
-        duration: const Duration(seconds: 3),
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 50),),
+        SnackBar(content: Text('Failed to get location: $e')),
       );
     }
   }
@@ -209,9 +205,6 @@ class _CapturePageState extends State<CapturePage> {
             style: GoogleFonts.poppins(color: Colors.red),
           ),
           backgroundColor: Colors.white,
-          duration: const Duration(seconds: 3),
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 50),
         ),
       );
       return;
@@ -225,9 +218,6 @@ class _CapturePageState extends State<CapturePage> {
             style: GoogleFonts.poppins(color: Colors.red),
           ),
           backgroundColor: Colors.white,
-          duration: const Duration(seconds: 3),
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 50),
         ),
       );
       return;
@@ -242,9 +232,6 @@ class _CapturePageState extends State<CapturePage> {
             style: GoogleFonts.poppins(color: Colors.red),
           ),
           backgroundColor: Colors.white,
-          duration: const Duration(seconds: 3),
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 50),
         ),
       );
       return;
@@ -257,10 +244,7 @@ class _CapturePageState extends State<CapturePage> {
 
     try {
       // Set default image URL if no image is provided
-      String imageUrl = widget.reportData?['image_url'] ?? '';
-      if (imageUrl == 'No Image Uploaded') {
-        imageUrl = ''; // Set to an empty string if invalid
-      }
+      String imageUrl = widget.reportData?['image_url'] ?? 'No Image Uploaded';
 
       // Upload image to Cloudinary if a new file is selected
       if (filePath != null) {
@@ -287,11 +271,7 @@ class _CapturePageState extends State<CapturePage> {
 
             ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Report Submitted Successfully!',
-          style: GoogleFonts.poppins(color: Colors.white)),
-          duration: const Duration(seconds: 3),
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          content: Text('Report Submitted Successfully'),
         ),
       );
 
@@ -302,11 +282,7 @@ class _CapturePageState extends State<CapturePage> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error Saving Report.',
-          style: GoogleFonts.poppins(color: Colors.red)),
-          duration: const Duration(seconds: 3),
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          content: Text('Error Saving Report'),
         ),
       );
     }
@@ -364,58 +340,57 @@ class _CapturePageState extends State<CapturePage> {
                 style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
-              if (isImageEnabled && (filePath != null || (widget.reportData?['image_url'] != null && widget.reportData!['image_url'].isNotEmpty))) ...[
-              Container(
-                width: MediaQuery.of(context).size.width * 0.8,
-                height: MediaQuery.of(context).size.height * 0.3,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
-                  borderRadius: BorderRadius.circular(0),
-                ),
-                child: widget.reportData?['image_url'] != null &&
-                        widget.reportData!['image_url'].isNotEmpty &&
-                        Uri.tryParse(widget.reportData!['image_url'])?.hasAbsolutePath == true
-                    ? Image.network(
-                        widget.reportData!['image_url'],
-                        fit: BoxFit.cover,
-                      )
-                    : filePath != null
-                        ? Image.file(
-                            filePath!,
-                            fit: BoxFit.cover,
-                          )
-                        : Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                Icons.cloud_upload_outlined,
-                                size: 50,
-                                color: Color.fromARGB(255, 96, 32, 109),
-                              ),
-                              const SizedBox(height: 5), // Spacing between the icon and button
-                              SizedBox(
-                                width: MediaQuery.of(context).size.width * 0.4,
-                                child: ElevatedButton(
-                                  onPressed: pickImageGallery,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color.fromARGB(255, 96, 32, 109),
-                                    padding: const EdgeInsets.symmetric(vertical: 5),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(30),
+              if (isImageEnabled) ...[
+                Container(
+                  width: MediaQuery.of(context).size.width * 0.8,
+                  height: MediaQuery.of(context).size.height * 0.3,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(0),
+                  ),
+                  child: filePath != null
+                      ? Image.file(
+                          filePath!,
+                          fit: BoxFit.cover,
+                        )
+                      : widget.reportData?['image_url'] != null
+                          ? Image.network(
+                              widget.reportData!['image_url'],
+                              fit: BoxFit.cover,
+                            )
+                          : Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.cloud_upload_outlined,
+                                  size: 50,
+                                  color: Color.fromARGB(255, 96, 32, 109),
+                                ),
+                                const SizedBox(height: 5), // Spacing between the icon and button
+                                SizedBox(
+                                  width: MediaQuery.of(context).size.width * 0.4,
+                                  child: ElevatedButton(
+                                    onPressed: pickImageGallery,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color.fromARGB(255, 96, 32, 109),
+                                      padding: const EdgeInsets.symmetric(vertical: 5),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(30),
+                                      ),
                                     ),
-                                  ),
-                                  child: Text(
-                                    "Browse Gallery",
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 13,
-                                      color: Colors.white,
+                                    child: Text(
+                                      "Browse Gallery",
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 13,
+                                        color: Colors.white,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-              ),
+                              ],
+                            ),
+                ),
+
                 const SizedBox(height: 10), // Spacing after the container
               ],
               Row(
