@@ -171,7 +171,7 @@ class _CapturePageState extends State<CapturePage> {
 
 
   Future<String> uploadImageToCloudinary(File imageFile) async {
-    final cloudinaryUrl = "https://api.cloudinary.com/v1_1/dptzx1six/image/upload";
+    final cloudinaryUrl = "https://api.cloudinary.com/v1_1/breakfree/image/upload";
 
     try {
       final request = http.MultipartRequest("POST", Uri.parse(cloudinaryUrl));
