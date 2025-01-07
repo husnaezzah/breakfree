@@ -49,7 +49,7 @@ class _ViewPageState extends State<ViewPage> {
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 96, 32, 109),
         title: Text(
-          'View Case Report',
+          'BreakFree.',
           style: GoogleFonts.poppins(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -128,17 +128,13 @@ class _ViewPageState extends State<ViewPage> {
   /// Image Field Widget
   Widget _buildImageField(String? imageUrl) {
     if (imageUrl == null || imageUrl.isEmpty) {
-      return Container(
-        width: MediaQuery.of(context).size.width * 0.8,
-        height: MediaQuery.of(context).size.height * 0.3,
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Center(
-          child: Text(
-            'No Image Uploaded',
-            style: GoogleFonts.poppins(fontSize: 14, color: Colors.black),
+      return Center(
+        child: Text(
+          'No Image Uploaded',
+          style: GoogleFonts.poppins(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
           ),
         ),
       );
@@ -151,11 +147,22 @@ class _ViewPageState extends State<ViewPage> {
         borderRadius: BorderRadius.circular(10),
       ),
       child: Image.network(
-        imageUrl,
-        fit: BoxFit.cover,
-      ),
-    );
-  }
+      imageUrl,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) {
+        return Center(
+          child: Text(
+            'No Image Uploaded',
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              color: Colors.black,
+            ),
+          ),
+        );
+      },
+    ),
+  );
+}
 
   /// Helper function to create read-only text fields
   Widget _buildReadOnlyField({
