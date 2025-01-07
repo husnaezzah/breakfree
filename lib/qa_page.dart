@@ -49,6 +49,86 @@ class _QAPageState extends State<QAPage> {
         });
         _addTextResponse("Domestic violence is a serious issue, and BreakFree is here to provide support, resources, and information.");
       });
+
+    } else if (message.toLowerCase().contains("signs") || message.toLowerCase().contains("symptoms")) {
+      setState(() {
+        _messages.add({
+          "bot_image": Image.asset(
+            "assets/physical_harm.png",
+            width: 450,
+            height: 450,
+          ),
+        });
+        _messages.add({
+          "bot_image": Image.asset(
+            "assets/verbal_threat.png",
+            width: 450,
+            height: 450,
+          ),
+        });
+        _messages.add({
+          "bot_image": Image.asset(
+            "assets/behavior_control.png",
+            width: 450,
+            height: 450,
+          ),
+          
+        });
+         _messages.add({
+          "bot_image": Image.asset(
+            "assets/isolation.png",
+            width: 450,
+            height: 450,
+          ),
+        });
+        _addTextResponse("These are the most common signs in domestic violence.");
+      });
+
+        } else if (message.toLowerCase().contains("physical harm") || message.toLowerCase().contains("physical") || message.toLowerCase().contains("harm")) {
+        setState(() {
+        _messages.add({
+          "bot_image": Image.asset(
+            "assets/physical_harm.png",
+            width: 450,
+            height: 450,
+          ),
+        });
+        _addTextResponse("Physical harm often starts subtly, like pushing or grabbing, and can escalate to severe violence. This is a clear violation of safety and boundaries.");
+      });
+      } else if (message.toLowerCase().contains("verbal threats") || message.toLowerCase().contains("verbal") || message.toLowerCase().contains("threats")) {
+        setState(() {
+          _messages.add({
+            "bot_image": Image.asset(
+              "assets/verbal_threats.png",
+              width: 450,
+              height: 450,
+            ),
+          });
+          _addTextResponse("Verbal threats can involve insults, humiliation, or frightening statements that make you feel worthless or afraid to speak up. They aim to instill fear and maintain control over the victim.");
+        });
+        } else if (message.toLowerCase().contains("behavior control") || message.toLowerCase().contains("controlling behavior") || message.toLowerCase().contains("control")) {
+          setState(() {
+            _messages.add({
+              "bot_image": Image.asset(
+                "assets/behavior_control.png",
+                width: 450,
+                height: 450,
+              ),
+            });
+            _addTextResponse("Controlling behavior can look like constant checking of your location, deciding what you can or can't do, or using guilt to manipulate decisions.");
+          });
+        } else if (message.toLowerCase().contains("isolation") || message.toLowerCase().contains("isolating")) {
+          setState(() {
+            _messages.add({
+              "bot_image": Image.asset(
+                "assets/isolation.png",
+                width: 450,
+                height: 450,
+              ),
+            });
+            _addTextResponse("Isolation doesn't just mean keeping you away from people—it can also mean discouraging you from sharing your feelings or seeking outside help.");
+          });
+            
     } else if (message.toLowerCase().contains("resources")) {
       _addTextResponse("Our app provides local resources including nearby shelters, hospitals, and hotlines. You can find help close by anytime.");
     } else if (message.toLowerCase().contains("emergency")) {
@@ -78,7 +158,8 @@ class _QAPageState extends State<QAPage> {
             height: 450,
           ),
         });
-        _addTextResponse("OR Press the SOS button.");
+        _addTextResponse("OR directly");
+        _addSOSButton();
       });
     } else {
       _addTextResponse("I'm here to help, but I didn't quite understand that. Could you please rephrase?");
@@ -113,6 +194,29 @@ class _QAPageState extends State<QAPage> {
           ),
           child: Text(
             'Go to Assistance Page',
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              color: Colors.white,
+            ),
+          ),
+        ),
+      });
+    });
+  }
+
+  // Method to add a button to navigate to the assistance page
+  void _addSOSButton() {
+    setState(() {
+      _messages.add({
+        "bot": TextButton(
+          onPressed: () {
+            Navigator.pushNamed(context, '/sos');  // Navigate to the Assistance Page
+          },
+          style: TextButton.styleFrom(
+            backgroundColor: const Color.fromARGB(255, 96, 32, 109), // Set your desired background color
+          ),
+          child: Text(
+            'Go to SOS Page',
             style: GoogleFonts.poppins(
               fontSize: 14,
               color: Colors.white,
