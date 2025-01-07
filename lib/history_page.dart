@@ -68,20 +68,7 @@ class HistoryPage extends StatelessWidget {
       },
     );
   }
-
-  // Move draft to submissions upon completion with context parameter
-Future<void> moveDraftToRecent(BuildContext context, Map<String, dynamic> reportData, String docId) async {
-  // Move the report data to 'submissions' collection
-  await FirebaseFirestore.instance
-      .collection('reports')
-      .doc('submissions')
-      .collection('anon_penguin')
-      .add(reportData);
-
-  // Now delete the report from drafts using confirmation
-  await deleteReport(context, 'drafts', docId);
-}
-
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -109,99 +96,6 @@ Future<void> moveDraftToRecent(BuildContext context, Map<String, dynamic> report
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Drafts Section
-              Text(
-                "Drafts",
-                style: GoogleFonts.poppins(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 10),
-              StreamBuilder<QuerySnapshot>(
-                stream: fetchReports('drafts'),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  final drafts = snapshot.data?.docs ?? [];
-                  return drafts.isEmpty
-                      ? Text(
-                          'No drafts available.',
-                          style: GoogleFonts.poppins(fontSize: 14),
-                        )
-                      : ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: drafts.length,
-                          itemBuilder: (context, index) {
-                            final draft = drafts[index];
-                            final reportData = draft.data() as Map<String, dynamic>;
-
-                            return GestureDetector(
-                              onTap: () {
-                                devtools.log('Navigating to CapturePage with data: $reportData');
-                                // Pass the stored report data and case ID to the capture page
-                                Navigator.pushNamed(
-                                  context,
-                                  '/capture',
-                                  arguments: {
-                                    'reportData': reportData,
-                                    'caseId': draft.id,
-                                  },
-                                );
-                              },
-                              child: Container(
-                                margin: const EdgeInsets.only(bottom: 10),
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(15),
-                                  border: Border.all(
-                                    color: const Color.fromARGB(255, 96, 32, 109),
-                                    width: 2,
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          "Case Number: ${reportData['case_number'] ?? 'Unknown'}",
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.black,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 5),
-                                        Text(
-                                          "Status: In Progress",
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 14,
-                                            color: Colors.grey[600],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.delete, color: Colors.red),
-                                      onPressed: () => deleteReport(context, 'drafts', draft.id),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        );
-                },
-              ),
-              const SizedBox(height: 20),
-
               // Recent Submissions Section
               Text(
                 "Recent Submissions",
@@ -232,7 +126,23 @@ Future<void> moveDraftToRecent(BuildContext context, Map<String, dynamic> report
                             final submission = submissions[index];
                             final reportData = submission.data() as Map<String, dynamic>;
 
-                            return Container(
+                            return GestureDetector(
+                            onTap: () {
+                              // Ensure reportData and caseId are properly populated
+                              print('Navigating to View Page with caseId: ${submission.id}');
+                              print('Report Data: $reportData');
+
+                              Navigator.pushNamed(
+                                context,
+                                '/view', // Route for view_page.dart
+                                arguments: {
+                                  'reportData': reportData, // Ensure this is a valid Map
+                                  'caseId': submission.id,  // Ensure this is a valid case ID
+                                },
+                              );
+                            },
+
+                            child: Container(
                               margin: const EdgeInsets.only(bottom: 10),
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
@@ -275,8 +185,8 @@ Future<void> moveDraftToRecent(BuildContext context, Map<String, dynamic> report
                                   ),
                                 ],
                               ),
-                            );
-                          },
+                            ));
+                      },
                         );
                 },
               ),

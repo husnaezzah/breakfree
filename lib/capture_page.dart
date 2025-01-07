@@ -43,6 +43,7 @@ class _CapturePageState extends State<CapturePage> {
       phoneNumberController.text = report['phone_number'];
       locationController.text = report['location'];
       descriptionController.text = report['description'];
+      label = report['label'] ?? 'Other Potential Forms of Violence';
 
       //Load the image URL
       if (report['image_url'] != null && report['image_url'].isNotEmpty) {
@@ -74,11 +75,11 @@ class _CapturePageState extends State<CapturePage> {
     try {
       if (caseNumber.isNotEmpty) return;
 
-      final draftsSnapshot = await FirebaseFirestore.instance
+      /*final draftsSnapshot = await FirebaseFirestore.instance
           .collection('reports')
           .doc('drafts')
           .collection('anon_penguin')
-          .get();
+          .get();*/
 
       final submissionsSnapshot = await FirebaseFirestore.instance
           .collection('reports')
@@ -87,7 +88,7 @@ class _CapturePageState extends State<CapturePage> {
           .get();
 
       final allCaseNumbers = {
-        ...draftsSnapshot.docs.map((doc) => doc['case_number'] as String),
+        //...draftsSnapshot.docs.map((doc) => doc['case_number'] as String),
         ...submissionsSnapshot.docs.map((doc) => doc['case_number'] as String),
       };
 
@@ -241,12 +242,9 @@ class _CapturePageState extends State<CapturePage> {
       await _generateCaseNumber();
     }
 
-    // Check if updating an existing draft
-    final isUpdating = widget.caseId != null;
-
     try {
       // Set default image URL if no image is provided
-      String imageUrl = widget.reportData?['image_url'] ?? 'https://example.com/default-image.png';
+      String imageUrl = widget.reportData?['image_url'] ?? 'No Image Uploaded';
 
       // Upload image to Cloudinary if a new file is selected
       if (filePath != null) {
@@ -262,64 +260,33 @@ class _CapturePageState extends State<CapturePage> {
         'status': status,
         'timestamp': FieldValue.serverTimestamp(),
         'image_url': imageUrl,
+        'label': label,
       };
 
-      // Determine Firestore collection
-      final collection = status == 'In Progress' ? 'drafts' : 'submissions';
+      await FirebaseFirestore.instance
+          .collection('reports')
+          .doc('submissions')
+          .collection('anon_penguin')
+          .add(reportData);
 
-      if (isUpdating) {
-        // Update an existing draft
-        await FirebaseFirestore.instance
-            .collection('reports')
-            .doc(collection)
-            .collection('anon_penguin')
-            .doc(widget.caseId)
-            .set(reportData);
-      } else {
-        // Add a new draft or submission
-        await FirebaseFirestore.instance
-            .collection('reports')
-            .doc(collection)
-            .collection('anon_penguin')
-            .add(reportData);
-      }
-
-      // Success message
-      ScaffoldMessenger.of(context).showSnackBar(
+            ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            isUpdating
-                ? 'Draft Updated Successfully'
-                : status == 'In Progress'
-                    ? 'Saved as Draft'
-                    : 'Report Submitted Successfully',
-            style: GoogleFonts.poppins(color: Colors.white),
-          ),
-          backgroundColor: Colors.black,
+          content: Text('Report Submitted Successfully'),
         ),
       );
 
-      // Clear fields after saving
-      if (status != 'In Progress') {
-        setState(() {
-          filePath = null;
-          caseNumber = '';
-        });
-      }
+    setState(() {
+        filePath = null;
+        caseNumber = '';
+      });
     } catch (e) {
-      // Error handling
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            'Error Saving Report: $e',
-            style: GoogleFonts.poppins(color: Colors.red),
-          ),
-          backgroundColor: Colors.white,
+          content: Text('Error Saving Report'),
         ),
       );
     }
   }
-
 
   @override
     void dispose() {
@@ -640,25 +607,10 @@ class _CapturePageState extends State<CapturePage> {
           ],),),
             ),
             ],),
-          const SizedBox(height: 20),
+          const SizedBox(height: 5),
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.35,
-                    child: ElevatedButton(
-                      onPressed: () => saveReport('In Progress'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 96, 32, 109),
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                      ),
-                      child: Text(
-                        "Draft",
-                        style: GoogleFonts.poppins(fontSize: 14, color: Colors.white),
-                      ),
-                    ),
-                  ),
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [      
                   const SizedBox(width: 20),
                   SizedBox(
                     width: MediaQuery.of(context).size.width * 0.35,
@@ -676,54 +628,6 @@ class _CapturePageState extends State<CapturePage> {
                     ),
                   ),
                 ],
-              ),
-            ],
-          ),
-        ),
-      ),
-      floatingActionButton: SizedBox(
-        width: 70,
-        height: 70,
-        child: FloatingActionButton(
-          onPressed: () {
-            Navigator.pushNamed(context, '/sos');
-          },
-          backgroundColor: Colors.red,
-          shape: CircleBorder(),
-          child: Text(
-            'SOS',
-            style: GoogleFonts.poppins(
-              fontSize: 20,
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(
-        color: Colors.white, // Bottom navigation bar color changed to white
-        shape: CircularNotchedRectangle(),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton(
-                icon: Icon(Icons.home, color: Colors.black),
-                onPressed: () {
-                  Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
-                },
-              ),
-              SizedBox(width: 40), // Space for the SOS button in the center
-              IconButton(
-                icon: Icon(
-                  Icons.person,
-                  color: ModalRoute.of(context)?.settings.name == '/profile' ? Color(0xFFAD8FC6) : Colors.black,
-                ),
-                onPressed: () {
-                  Navigator.pushNamed(context, '/profile');
-                },
               ),
             ],
           ),

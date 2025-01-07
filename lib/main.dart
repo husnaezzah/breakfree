@@ -11,6 +11,7 @@ import 'history_page.dart';
 import 'sos_page.dart';
 import 'startup_page.dart';
 import 'forum_page.dart';
+import 'view_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Ensure Flutter is initialized before Firebase
@@ -28,17 +29,36 @@ class MyApp extends StatelessWidget {
       ),
       initialRoute: '/startup', // Set the initial route to the StartupPage
       routes: {
-        '/startup': (context) => StartupPage(), // Startup page
-        '/signup': (context) => SignUpPage(), // Sign up page
-        '/login': (context) => LoginPage(), // Login page
-        '/home': (context) => HomePage(), // Home page
-        '/profile': (context) => ProfilePage(), // Profile page
-        '/capture': (context) => CapturePage(), // Capture page
-        '/qa': (context) => QAPage(), // Q&A page
-        '/assistance': (context) => AssistancePage(), // Assistance page
-        '/history': (context) => HistoryPage(), // History page
-        '/sos': (context) => SOSPage(), // SOS page
-        '/forum': (context) => ForumPage(), // Forum page
+        '/startup': (context) => StartupPage(),
+        '/signup': (context) => SignUpPage(),
+        '/login': (context) => LoginPage(),
+        '/home': (context) => HomePage(),
+        '/profile': (context) => ProfilePage(),
+        '/capture': (context) => CapturePage(),
+        '/qa': (context) => QAPage(),
+        '/assistance': (context) => AssistancePage(),
+        '/history': (context) => HistoryPage(),
+        '/sos': (context) => SOSPage(),
+        '/forum': (context) => ForumPage(),
+      },
+      // Handle dynamic routes here
+      onGenerateRoute: (settings) {
+        if (settings.name == '/view') {
+          // Get arguments passed during navigation
+          final args = settings.arguments as Map<String, dynamic>?;
+
+          if (args != null) {
+            return MaterialPageRoute(
+              builder: (context) {
+                return ViewPage(
+                  reportData: args['reportData'],
+                  caseId: args['caseId'],
+                );
+              },
+            );
+          }
+        }
+        return null; // Return null if no matching route is found
       },
     );
   }
