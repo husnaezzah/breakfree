@@ -1,21 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Make sure Firestore is correctly imported
 
 class ViewPage extends StatelessWidget {
-  final Map<String, dynamic> reportData;
   final String caseId;
 
-  const ViewPage({Key? key, required this.reportData, required this.caseId}) : super(key: key);
+  const ViewPage({Key? key, required this.caseId}) : super(key: key);
+
+  Future<Map<String, dynamic>?> fetchReport(String caseId) async {
+    try {
+      final document = await FirebaseFirestore.instance
+          .collection('reports')
+          .doc('submissions')
+          .collection('anon_penguin')
+          .doc(caseId)
+          .get();
+
+      return document.data();
+    } catch (e) {
+      debugPrint('Error fetching report: $e');
+      return null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 251, 247, 247),
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 96, 32, 109),
         title: Text(
-          'View Submission',
+          'View Report',
           style: GoogleFonts.poppins(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -29,96 +43,107 @@ class ViewPage extends StatelessWidget {
           },
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Case Number
-              Text(
-                "Case Number: ${reportData['case_number'] ?? 'Unknown'}",
-                style: GoogleFonts.poppins(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-              const SizedBox(height: 10),
+      body: FutureBuilder<Map<String, dynamic>?>(
+        future: fetchReport(caseId),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-              // Image Section (if image URL exists)
-              if (reportData['image_url'] != null && reportData['image_url'].isNotEmpty) ...[
-                Image.network(
-                  reportData['image_url'],
-                  width: MediaQuery.of(context).size.width * 0.8,
-                  height: MediaQuery.of(context).size.height * 0.3,
-                  fit: BoxFit.cover,
+          if (!snapshot.hasData || snapshot.data == null) {
+            return Center(
+              child: Text(
+                'Report not found.',
+                style: GoogleFonts.poppins(fontSize: 16),
+              ),
+            );
+          }
+
+          final report = snapshot.data!;
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Case Number: ${report['case_number'] ?? 'Unknown'}',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 20),
+                if (report['image_url'] != null && report['image_url'] != '')
+                  Container(
+                    height: 200,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Image.network(
+                      report['image_url'],
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                const SizedBox(height: 20),
+                Text(
+                  'Phone Number:',
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  report['phone_number'] ?? 'Not Provided',
+                  style: GoogleFonts.poppins(fontSize: 14),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Location:',
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  report['location'] ?? 'Not Provided',
+                  style: GoogleFonts.poppins(fontSize: 14),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Description:',
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  report['description'] ?? 'Not Provided',
+                  style: GoogleFonts.poppins(fontSize: 14),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Label:',
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  report['label'] ?? 'Other Potential Forms of Violence',
+                  style: GoogleFonts.poppins(fontSize: 14),
+                ),
               ],
-
-              // Status
-              Text(
-                "Status: ${reportData['status'] ?? 'Unknown'}",
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  color: Colors.grey[700],
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Description
-              Text(
-                "Description: ${reportData['description'] ?? 'No description provided.'}",
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: Colors.grey[800],
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Phone Number
-              Text(
-                "Phone Number: ${reportData['phone_number'] ?? 'Unknown'}",
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: Colors.grey[800],
-                ),
-              ),
-              const SizedBox(height: 10),
-
-              // Location
-              Text(
-                "Location: ${reportData['location'] ?? 'Unknown'}",
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: Colors.grey[800],
-                ),
-              ),
-              const SizedBox(height: 10),
-
-              // Label (Type of Violence)
-              Text(
-                "Label: ${reportData['label'] ?? 'Not specified'}",
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: Colors.grey[800],
-                ),
-              ),
-              const SizedBox(height: 10),
-
-              // Timestamp (Formatted to Date)
-              Text(
-                "Submitted On: ${reportData['timestamp'] != null ? (reportData['timestamp'] as Timestamp).toDate().toLocal().toString() : 'Unknown'}",
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: Colors.grey[800],
-                ),
-              ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
+  }
+
+  /// Factory method for generating the `ViewPage` from route arguments.
+  static ViewPage fromRouteSettings(RouteSettings settings) {
+    final args = settings.arguments as Map<String, dynamic>;
+    return ViewPage(caseId: args['caseId']);
   }
 }

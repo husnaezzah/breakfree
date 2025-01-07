@@ -12,6 +12,7 @@ class HistoryPage extends StatelessWidget {
         .collection('reports')
         .doc(collection)
         .collection('anon_penguin')
+        .limit(10)
         .snapshots();
   }
 

@@ -42,22 +42,13 @@ class MyApp extends StatelessWidget {
         '/forum': (context) => ForumPage(),
       },
       // Handle dynamic routes here
-      onGenerateRoute: (settings) {
-        if (settings.name == '/view') {
-          // Get arguments passed during navigation
-          final args = settings.arguments as Map<String, dynamic>?;
-
-          if (args != null) {
-            return MaterialPageRoute(
-              builder: (context) {
-                return ViewPage(
-                  reportData: args['reportData'],
-                  caseId: args['caseId'],
-                );
-              },
-            );
-          }
-        }
+      onGenerateRoute: (RouteSettings settings) {
+    if (settings.name == '/view') {
+      final args = settings.arguments as Map<String, dynamic>;
+      return MaterialPageRoute(
+        builder: (context) => ViewPage(caseId: args['caseId']),
+      );
+    }
         return null; // Return null if no matching route is found
       },
     );
