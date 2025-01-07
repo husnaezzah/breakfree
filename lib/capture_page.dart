@@ -205,6 +205,9 @@ class _CapturePageState extends State<CapturePage> {
             style: GoogleFonts.poppins(color: Colors.red),
           ),
           backgroundColor: Colors.white,
+          duration: const Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 50),
         ),
       );
       return;
@@ -218,6 +221,9 @@ class _CapturePageState extends State<CapturePage> {
             style: GoogleFonts.poppins(color: Colors.red),
           ),
           backgroundColor: Colors.white,
+          duration: const Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 50),
         ),
       );
       return;
@@ -232,6 +238,9 @@ class _CapturePageState extends State<CapturePage> {
             style: GoogleFonts.poppins(color: Colors.red),
           ),
           backgroundColor: Colors.white,
+          duration: const Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 50),
         ),
       );
       return;
@@ -271,7 +280,12 @@ class _CapturePageState extends State<CapturePage> {
 
             ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Report Submitted Successfully'),
+          content: Text('Report Submitted Successfully!',
+          style: GoogleFonts.poppins(color: Colors.white)),
+          backgroundColor: Colors.black,
+          duration: const Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 50),
         ),
       );
 
@@ -282,7 +296,12 @@ class _CapturePageState extends State<CapturePage> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error Saving Report'),
+          content: Text('Error Saving Report.',
+          style: GoogleFonts.poppins(color: Colors.white)),
+          backgroundColor: Colors.black,
+          duration: const Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 50),
         ),
       );
     }
