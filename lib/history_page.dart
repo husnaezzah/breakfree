@@ -24,6 +24,7 @@ class HistoryPage extends StatelessWidget {
           title: Text(
             'Delete Report?',
             style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
           ),
           content: Text(
             'This will delete the report case permanently. You cannot undo this action.',

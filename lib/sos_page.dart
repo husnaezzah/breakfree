@@ -15,30 +15,34 @@ class _SOSPageState extends State<SOSPage> {
   @override
   void initState() {
     super.initState();
-    // Automatically display the dialog and start the countdown when the page loads
-    WidgetsBinding.instance.addPostFrameCallback((_) => startCountdown(context));
+    // Start the countdown and show dialog after the first frame is rendered
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      startCountdown(context);
+    });
   }
 
   void startCountdown(BuildContext context) {
-    countdown = 15; // Reset countdown to 15 seconds
+    countdown = 10; // Reset countdown to 10 seconds
 
-    timer = Timer.periodic(Duration(seconds: 1), (timer) {
-      if (countdown > 0) {
-        setState(() {
-          countdown--; // Decrease countdown
-        });
-      } else {
-        timer.cancel(); // Stop timer
-        Navigator.of(context).pop(); // Close dialog
-        initiateCall(); // Call once countdown hits 0
-      }
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            // Start the timer
+            timer ??= Timer.periodic(Duration(seconds: 1), (timer) {
+              if (countdown > 0) {
+                setState(() {
+                  countdown--; // Decrease countdown
+                });
+              } else {
+                timer.cancel(); // Stop timer
+                Navigator.of(context).pop(); // Close dialog
+                initiateCall(); // Call once countdown hits 0
+              }
+            });
 
-      // Show the dialog again with the updated countdown
-      if (mounted) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (BuildContext context) {
             return AlertDialog(
               title: Text(
                 'Activate the SOS button?',
@@ -66,7 +70,7 @@ class _SOSPageState extends State<SOSPage> {
                   SizedBox(height: 20),
                   // Progress bar to visually show countdown
                   LinearProgressIndicator(
-                    value: countdown / 15, // Value reduces as countdown progresses
+                    value: countdown / 10, // Value reduces as countdown progresses
                     color: Colors.red,
                     backgroundColor: Colors.grey[300],
                   ),
@@ -79,7 +83,9 @@ class _SOSPageState extends State<SOSPage> {
                   children: [
                     TextButton(
                       onPressed: () {
-                        timer.cancel(); // Stop the timer
+                        if (timer != null) {
+                          timer!.cancel();
+                        }
                         Navigator.of(context).pop(); // Close the dialog
                         Navigator.pushNamedAndRemoveUntil(
                             context, '/home', (route) => false); // Navigate to home and remove history
@@ -92,7 +98,9 @@ class _SOSPageState extends State<SOSPage> {
                     SizedBox(width: 10), // Spacing between buttons
                     ElevatedButton(
                       onPressed: () {
-                        timer.cancel(); // Stop the timer
+                        if (timer != null) {
+                          timer!.cancel();
+                        }
                         Navigator.of(context).pop(); // Close the dialog
                         initiateCall(); // Initiate the call
                       },
@@ -108,8 +116,8 @@ class _SOSPageState extends State<SOSPage> {
             );
           },
         );
-      }
-    });
+      },
+    );
   }
 
   Future<void> initiateCall() async {
@@ -125,7 +133,9 @@ class _SOSPageState extends State<SOSPage> {
 
   @override
   void dispose() {
-    timer?.cancel(); // Cancel the timer if the widget is disposed
+    if (timer != null) {
+      timer!.cancel();
+    }
     super.dispose();
   }
 
@@ -137,20 +147,25 @@ class _SOSPageState extends State<SOSPage> {
         children: [
           // Background SOS logo
           Center(
-            child: Container(
-              width: 150,
-              height: 150,
-              decoration: BoxDecoration(
-                color: Colors.red,
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: Text(
-                  'SOS',
-                  style: GoogleFonts.poppins(
-                    fontSize: 40,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+            child: GestureDetector(
+              onTap: () {
+                startCountdown(context);
+              },
+              child: Container(
+                width: 150,
+                height: 150,
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    'SOS',
+                    style: GoogleFonts.poppins(
+                      fontSize: 40,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
